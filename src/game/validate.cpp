@@ -10,6 +10,7 @@
 #include "engine/data_store.h"
 #include "engine/gltf_inspect.h"
 #include "engine/log.h"
+#include "engine/nav.h"
 #include "engine/paths.h"
 
 namespace fs = std::filesystem;
@@ -99,6 +100,28 @@ int ValidateContent() {
             if (!ParseZone(j, z, err)) {
                 LK_ERROR("validate: %s: %s", rel.c_str(), err.c_str());
                 ++problems;
+            } else if (rel == "levels/zone.json") {
+                // Connectivity: everything that matters must be reachable from the spawn (all gates open).
+                Nav nav;
+                nav.Build(z);
+                Vector3 spawn{z.playerSpawn.x, z.playerSpawn.y + 0.1f, z.playerSpawn.z};
+                auto reach = [&](const char* what, const std::string& id, Vec3f p) {
+                    Vector3 t{p.x, p.y + 0.1f, p.z};
+                    if (nav.Path(spawn, t).empty() && !nav.Walkable(t)) {
+                        LK_ERROR("validate: zone: %s '%s' at (%.1f, %.1f, %.1f) is not on the nav grid", what, id.c_str(), p.x, p.y, p.z);
+                        ++problems;
+                    } else if (nav.Path(spawn, t).empty()) {
+                        LK_ERROR("validate: zone: %s '%s' is unreachable from the spawn", what, id.c_str());
+                        ++problems;
+                    }
+                };
+                for (const auto& s : z.shrines) reach("shrine", s.id, s.pos);
+                for (const auto& s : z.items) reach("item", s.id, s.pos);
+                for (const auto& s : z.braziers) reach("brazier", s.id, s.pos);
+                for (const auto& s : z.enemies) reach("enemy", s.id, s.pos);
+                for (const auto& s : z.gates) reach("gate", s.id, s.pos);
+                if (z.hasFogGate) reach("fog gate", z.fogGate.id, z.fogGate.pos);
+                LK_INFO("validate: zone connectivity checked (%d nav nodes)", nav.NodeCount());
             }
         }
         if (rel.rfind("anims/", 0) == 0 && j.contains("model") && j.contains("actions")) {

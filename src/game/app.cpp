@@ -15,6 +15,7 @@
 #include "game/anim_report.h"
 #include "game/selftest.h"
 #include "game/smoke_bot.h"
+#include "game/world/zone_editor.h"
 #include "rlgl.h"
 
 namespace fs = std::filesystem;
@@ -74,7 +75,7 @@ int App::Run(const AppOptions& opt) {
     if (!opt.animReport.empty()) return RunAnimReport();
     if (opt.selfTest) {
         if (!InitEngine(1280, 720, false)) return 3;
-        int f = RunCombatSelfTest(*ctx_) + RunEnemySelfTest(*ctx_);
+        int f = RunCombatSelfTest(*ctx_) + RunEnemySelfTest(*ctx_) + RunWorldSelfTest(*ctx_);
         return f == 0 ? 0 : 1;
     }
     return RunInteractive();
@@ -106,8 +107,55 @@ int App::RunInteractive() {
     if (!session_->Load(opt_.zone)) return 1;
     DisableCursor();
     bool cursorFree = false;
+#if defined(LK_DEBUG_TOOLS)
+    ZoneEditor editor;
+    bool editing = false;
+    Camera3D editorCam{};
+#endif
     while (!WindowShouldClose() && !session_->WantsQuit()) {
         float frameDt = std::min(GetFrameTime(), 0.25f);
+#if defined(LK_DEBUG_TOOLS)
+        if (IsKeyPressed(KEY_F2) && opt_.zone == "zone.json") {
+            editing = !editing;
+            if (editing) {
+                ZoneData z;
+                std::string err;
+                ParseZone(data_.Get("levels/zone.json"), z, err);
+                editor.Open(z, session_->PlayerPos());
+                EnableCursor();
+            } else {
+                session_->SetCameraOverride(nullptr);
+                session_->SetOverlay(nullptr);
+                session_->SetHudVisible(true);
+                DisableCursor();
+            }
+        }
+        if (editing) {
+            if (editor.Update(frameDt, data_.Get("editor.json"))) {
+                Vector3 keep = session_->PlayerPos();
+                session_ = std::make_unique<Session>(*ctx_);
+                session_->LoadZone(editor.Zone());
+                session_->GetPlayer().Teleport(keep, 0.0f);
+            }
+            if (editor.SaveRequested()) {
+                bool ok = WriteJsonFileAtomic(paths::Data("levels/zone.json"), ZoneToJson(editor.Zone()), 1);
+                if (ok) data_.Reload();
+                editor.SetStatus(ok ? "Saved data/levels/zone.json" : "Save FAILED");
+            }
+            editorCam = editor.Cam();
+            session_->SetCameraOverride(&editorCam);
+            session_->SetOverlay([&editor](Renderer& r) { editor.DrawOverlay3D(r); });
+            session_->SetHudVisible(false);
+            audio_.Update(frameDt);
+            BeginDrawing();
+            ClearBackground(BLACK);
+            ui_.Begin(GetScreenWidth(), GetScreenHeight(), input_.Peek(), input_.LastDevice(), input_.Family());
+            session_->Render(1.0f, GetScreenWidth(), GetScreenHeight());
+            editor.DrawUi(ui_);
+            EndDrawing();
+            continue;
+        }
+#endif
 #if defined(LK_DEBUG_TOOLS)
         if (IsKeyPressed(KEY_F5)) {
             data_.Reload();
@@ -118,7 +166,7 @@ int App::RunInteractive() {
         }
 #endif
         if (IsWindowResized()) renderer_.Resize(GetRenderWidth(), GetRenderHeight());
-        bool wantFree = session_->MenuOpen();
+        bool wantFree = session_->MenuOpen() || IsWindowFocused() == false;
         if (wantFree != cursorFree) {
             if (wantFree) EnableCursor();
             else DisableCursor();
@@ -135,6 +183,11 @@ int App::RunInteractive() {
 
 InputFrame App::CaptureScript(const std::string& scene, int f, int total) {
     InputFrame in;
+    const json& shots = data_.Get("capture.json")["shots"];
+    if (shots.contains(scene)) {
+        if (f == 0) in.look = {shots[scene]["look"][0].get<float>(), shots[scene]["look"][1].get<float>()};
+        return in;
+    }
     if (scene.rfind("lighting", 0) == 0 || scene == "zone_overview") {
         if (scene == "zone_overview" && f == 0) in.look = {0.0f, 0.25f};
         // Walk toward the far wall, then idle for the last part so the pose settles.
@@ -172,6 +225,19 @@ int App::RunCapture() {
     std::vector<std::string> scenes;
     if (opt_.captureScene == "all")
         scenes = {"lighting_full", "lighting_half", "lighting_low", "zone_overview", "combat", "swing", "parry", "hud", "shrine_menu", "death", "enemies"};
+    if (opt_.captureScene == "all" || opt_.captureScene == "areas")
+        for (auto& [name, shot] : data_.Get("capture.json")["shots"].items()) {
+            (void)shot;
+            if (opt_.captureScene == "areas") scenes.clear();
+            scenes.push_back(name);
+        }
+    if (opt_.captureScene == "areas") {
+        scenes.clear();
+        for (auto& [name, shot] : data_.Get("capture.json")["shots"].items()) {
+            (void)shot;
+            scenes.push_back(name);
+        }
+    }
     else scenes = {opt_.captureScene};
     input_.SetScripted(true);
     int failures = 0;
@@ -184,6 +250,10 @@ int App::RunCapture() {
         bool training = scene == "combat" || scene == "block" || scene == "hud" || scene == "swing" || scene == "parry";
         if (training) zone = "training.json";
         if (scene == "enemies") zone = "arena.json";
+        if (scene == "editor") zone = "zone.json";
+        const json& shots = data_.Get("capture.json")["shots"];
+        const json* shot = shots.contains(scene) ? &shots[scene] : nullptr;
+        if (shot) zone = shot->value("zone", zone);
         if (!session_->Load(zone)) {
             ++failures;
             continue;
@@ -199,6 +269,37 @@ int App::RunCapture() {
             session_->Camera().Reset(session_->GetPlayer().Pos(), 90.0f * DEG2RAD + PI);
             state_.progress.embers = 240;
             frames = 140;
+        }
+#if defined(LK_DEBUG_TOOLS)
+        if (scene == "editor") {
+            ZoneEditor ed;
+            ZoneData z;
+            std::string err;
+            ParseZone(data_.Get("levels/zone.json"), z, err);
+            ed.Open(z, Vector3{20.0f, 2.0f, 34.0f});
+            ed.Update(1.0f / 60.0f, data_.Get("editor.json"));
+            Camera3D ec = ed.Cam();
+            session_->SetCameraOverride(&ec);
+            session_->SetOverlay([&ed](Renderer& r) { ed.DrawOverlay3D(r); });
+            session_->SetHudVisible(false);
+            BeginDrawing();
+            ClearBackground(BLACK);
+            ui_.Begin(GetScreenWidth(), GetScreenHeight(), input_.Peek(), input_.LastDevice(), input_.Family());
+            session_->Render(1.0f, GetScreenWidth(), GetScreenHeight());
+            ed.DrawUi(ui_);
+            SaveScreenshot((fs::path(opt_.captureOut) / "editor.png").string());
+            EndDrawing();
+            session_->SetCameraOverride(nullptr);
+            session_->SetOverlay(nullptr);
+            continue;
+        }
+#endif
+        if (shot) {
+            Vector3 p{(*shot)["pos"][0].get<float>(), (*shot)["pos"][1].get<float>(), (*shot)["pos"][2].get<float>()};
+            float yaw = shot->value("yaw", 0.0f);
+            session_->GetPlayer().Teleport(p, yaw);
+            session_->Camera().Reset(p, yaw * DEG2RAD + PI);
+            frames = shot->value("frames", frames);
         }
         if (scene == "death") {
             FxQueue fx;
@@ -282,7 +383,7 @@ int App::PreloadEverything() {
 
 int App::RunSmoke() {
     if (!InitEngine(1280, 720, false)) return 3;
-    if (RunCombatSelfTest(*ctx_) + RunEnemySelfTest(*ctx_) != 0) {
+    if (RunCombatSelfTest(*ctx_) + RunEnemySelfTest(*ctx_) + RunWorldSelfTest(*ctx_) != 0) {
         LK_ERROR("smoke: self-test failed");
         return 1;
     }

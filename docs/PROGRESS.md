@@ -51,5 +51,22 @@
 - Embers drop on death; enemies respawn when the knight rests or dies.
 - Enemy self-test (`RunEnemySelfTest`, in `--selftest` and `--smoke-test`): tokens, warrior shield vs light/heavy, posture break then critical, mage bolts hit and teleport, rogue lunge speed, ember drops. All pass.
 
+## M4 World: done
+- `data/levels/zone.json`: one connected zone on two height layers (58 x 36 cells of 2 m), authored with `tools/zone_src/build_zone.py` (hand-placed rooms and placements, no randomness) and tunable in the F2 editor.
+  - **Crypt Entrance** (upper, west): floor hints engraved in the floor (glowing runes + text with the current device's button names), minion pairs, Entrance Shrine, a shortcut gate that only opens from the far side.
+  - **Flooded Ossuary** (lower, centre): dark, flooded halls (translucent water with light glints), braziers, rogues and mages, the greataxe room (warrior guard), the Ossuary Shrine, an optional Drowned Chapel with a Flask Shard, and a hidden wall revealed by lighting the hall D brazier (secret alcove with the second Flask Shard). The ossuary loops back up to the Entrance Shrine through the shortcut gate.
+  - **Warden's Hall** (upper, east): warrior gauntlet, The Twin Blades (two red-tinted rogues, 250 HP each, one boss bar), a second shortcut back down to the ossuary, a sealed gate that opens when the Twin Blades fall, the Warden's Shrine and the fog gate to the boss arena.
+  - Totals: 3 shrines, 2 shortcuts, 1 optional side area with a Flask Shard, 1 secret in a dark area, 11 braziers (4 in the boss arena), 29 enemies.
+- Braziers: 1 s interact, permanent and saved, add a point light with fire particles and halo; one reveals a hidden path.
+- Gates: shortcuts (open from one side only, saved), hidden walls, the boss-locked gate; colliders and nav cells toggle with them.
+- Pickups: Flask Shards (+1 max flask, up to 5), the greataxe (swap at shrines), an ember cache.
+- Area triggers show the area name.
+- F2 level editor (debug builds): free camera, layer select, paint/erase/rotate tiles, place/rotate/delete props, select/move/rotate/delete markers, add enemies, Ctrl+S saves `zone.json`; the session rebuilds from the edited data.
+- `--validate` checks zone connectivity (every shrine, item, brazier, gate and enemy reachable from the spawn on the nav graph).
+- World self-test: brazier reveals the secret, shortcuts open only from their side, pickups, Twin Blades open the sealed gate, everything persists across a reload.
+
+### Known issues
+- Rooms are sparsely decorated; more props come with the balance pass.
+
 ## Next
-- M4 World: F2 level editor, three areas, braziers, shortcuts, mini-boss, Flask Shards, greataxe.
+- M5 Boss: the Hollow Warden, fog gate, both phases, victory.

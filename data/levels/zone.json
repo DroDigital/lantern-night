@@ -1,111 +1,1355 @@
 {
-  "version": 1,
-  "name": "zone",
-  "cell_size": 2.0,
-  "model_scale": 0.5,
-  "layer_height": 2.0,
-  "music": "ambient",
-  "legend": {
-    "#": {
-      "kind": "wall",
-      "variants": [
-        "wall",
-        "wall",
-        "wall_cracked"
-      ]
-    },
-    ".": {
-      "kind": "floor",
-      "piece": "floor_tile_large"
-    },
-    "^": {
-      "kind": "stairs",
-      "piece": "stairs",
-      "rot": 0
-    }
+ "version": 1,
+ "name": "zone",
+ "cell_size": 2.0,
+ "model_scale": 0.5,
+ "layer_height": 2.0,
+ "music": "ambient",
+ "legend": {
+  "#": {
+   "kind": "wall",
+   "variants": [
+    "wall",
+    "wall",
+    "wall",
+    "wall_cracked",
+    "wall_arched",
+    "wall_window_closed"
+   ]
   },
-  "layers": [
-    {
-      "name": "ground",
-      "level": 0,
-      "origin": [
-        0,
-        0
-      ],
-      "rows": [
-        "#########",
-        "#.......#",
-        "#.......#",
-        "#...^...#",
-        "#.......#",
-        "#.......#",
-        "#########"
-      ]
-    },
-    {
-      "name": "upper",
-      "level": 1,
-      "origin": [
-        0,
-        0
-      ],
-      "rows": [
-        "#########",
-        "#.......#",
-        "#.......#"
-      ]
-    }
+  ".": {
+   "kind": "floor",
+   "piece": "floor_tile_large"
+  },
+  ",": {
+   "kind": "floor",
+   "piece": "floor_dirt_large"
+  },
+  ":": {
+   "kind": "floor",
+   "piece": "floor_tile_large_rocks"
+  },
+  "~": {
+   "kind": "floor",
+   "piece": "floor_dirt_large",
+   "water": true,
+   "dark": true
+  },
+  "<": {
+   "kind": "stairs",
+   "piece": "stairs",
+   "rot": 90
+  },
+  ">": {
+   "kind": "stairs",
+   "piece": "stairs",
+   "rot": 270
+  },
+  "^": {
+   "kind": "stairs",
+   "piece": "stairs",
+   "rot": 0
+  },
+  "v": {
+   "kind": "stairs",
+   "piece": "stairs",
+   "rot": 180
+  }
+ },
+ "layers": [
+  {
+   "name": "ossuary",
+   "level": 0,
+   "origin": [
+    0,
+    0
+   ],
+   "rows": [
+    "                                                          ",
+    "                 ################                         ",
+    "                 #,,,,,,,,,,,,,,########                  ",
+    "                 #,,,,,,,,,,,,,,#......#                  ",
+    "                 #,,,,.....,,,,,#......#                  ",
+    "                ##,,,,.....,,,,,.......#                  ",
+    "                #<,,,,.....,,,,,#......#                  ",
+    "                ##,,,,.....,,,,,#......#                  ",
+    "                 #,,,,,,,,,,,,,,#......#                  ",
+    "                 #,,,,,,,,,,,,,,########                  ",
+    "                 #,,,,,,,,,,,,,,#                         ",
+    "                 #,,,,,,,,,,,,,,#                         ",
+    "                 ######...#######                         ",
+    "                      #...#                               ",
+    "                      #...#                               ",
+    "                 ######...#########                       ",
+    "                 #~~~~~~~~~~~~~~~~#                       ",
+    "               ###~~~~~~~~~~~~~~~~###########             ",
+    "               #<.~~~~~~~~~~~~~~~~.........>#             ",
+    "               ###~~~~~~~~~~~~~~~~###########             ",
+    "                 #~~~~~~~~~~~~~~~~#                       ",
+    "                 #~~~~~~~~~~~~~~~~#                       ",
+    "                 #~.....~~~~~~~~~~#                       ",
+    "                 #~.....~~~~~~~~~~#                       ",
+    "                 #~.....~~~~~~~~~~#                       ",
+    "                 #~.....~~~~~~~~~~#                       ",
+    "                 #~.....~~~~~~~~~~#                       ",
+    "                 ###.#######~~#####                       ",
+    "                 #~~~~~~##~~~~~~~~#                       ",
+    "                 #~~~~~~##~~~~~~~~###########             ",
+    "                 #~~~~~~##~~~~~~~~.........>#             ",
+    "                 #~~~~~~##~~~~~~~~###########             ",
+    "                 #~~~~~~##~~~~~~~~.,,,#                   ",
+    "                 #~~~~~~###########,,,#                   ",
+    "                 ########         #,,,#                   ",
+    "                                  #####                   "
+   ]
+  },
+  {
+   "name": "upper",
+   "level": 1,
+   "origin": [
+    0,
+    0
+   ],
+   "rows": [
+    "                                           #............# ",
+    "                                           #............# ",
+    "                                           #............# ",
+    " #############                             #............# ",
+    " #...........#                             #............# ",
+    " #...........#####                         #............# ",
+    " #...............                          #............# ",
+    " #...........#####                         #............# ",
+    " #...........#                             ######.####### ",
+    " #...........#                               #........#   ",
+    " #...........#                               #........#   ",
+    " #...........#                               #........#   ",
+    " #####...#####                               ####.#####   ",
+    "     #...#                                  #####.####### ",
+    " #####...#####                              #...........# ",
+    " #...........#                              #...........# ",
+    " #...........#                              #...........# ",
+    " #...........####                          ##...........# ",
+    " #..............                            ............# ",
+    " #...........####                          ##...........# ",
+    " #...........#                              #...........# ",
+    " #...........#                              #...........# ",
+    " #...........#                              #...........# ",
+    " ####...######                              #...........# ",
+    "    #...#                                   #...........# ",
+    "    #...#                                   #####..###### ",
+    "    #...#                                   #####..#####  ",
+    "    #...#                                   #..........#  ",
+    "   ##...##                                  #..........#  ",
+    "   #.....#                                 ##..........#  ",
+    "   #.....#                                  ...........#  ",
+    "   #.....#                                 ##..........#  ",
+    "   #.....#                                  #..........#  ",
+    "   #.....#                                  #..........#  ",
+    "   #######                                  #..........#  ",
+    "                                            ############  "
+   ]
+  }
+ ],
+ "player_spawn": {
+  "pos": [
+   13.0,
+   2.0,
+   63.0
   ],
-  "player_spawn": {
-    "pos": [
-      9.0,
-      0.0,
-      10.0
+  "rot": 180
+ },
+ "shrines": [
+  {
+   "id": "shrine_entrance",
+   "name": "Entrance Shrine",
+   "pos": [
+    15.0,
+    2.0,
+    13.0
+   ],
+   "rot": 180
+  },
+  {
+   "id": "shrine_ossuary",
+   "name": "Ossuary Shrine",
+   "pos": [
+    43.0,
+    0.0,
+    49.0
+   ],
+   "rot": 90
+  },
+  {
+   "id": "shrine_warden",
+   "name": "Warden's Shrine",
+   "pos": [
+    99.0,
+    2.0,
+    21.0
+   ],
+   "rot": 180
+  }
+ ],
+ "enemies": [
+  {
+   "id": "e_m1",
+   "kind": "minion",
+   "pos": [
+    11.0,
+    2.0,
+    35.0
+   ],
+   "rot": 0
+  },
+  {
+   "id": "e_m2",
+   "kind": "minion",
+   "pos": [
+    21.0,
+    2.0,
+    39.0
+   ],
+   "rot": 270,
+   "patrol": [
+    [
+     7.0,
+     34.0
     ],
-    "rot": 180
+    [
+     21.0,
+     34.0
+    ]
+   ]
   },
-  "lights": [
-    {
-      "id": "t1",
-      "pos": [
-        3.0,
-        3.5,
-        3.0
-      ],
-      "preset": "torch_light"
-    },
-    {
-      "id": "t2",
-      "pos": [
-        15.0,
-        3.5,
-        3.0
-      ],
-      "preset": "torch_light"
-    }
+  {
+   "id": "e_m3",
+   "kind": "minion",
+   "pos": [
+    31.0,
+    2.0,
+    13.0
+   ],
+   "rot": 270
+  },
+  {
+   "id": "e_m4",
+   "kind": "minion",
+   "pos": [
+    45.0,
+    0.0,
+    11.0
+   ],
+   "rot": 90
+  },
+  {
+   "id": "e_m5",
+   "kind": "minion",
+   "pos": [
+    49.0,
+    0.0,
+    19.0
+   ],
+   "rot": 90
+  },
+  {
+   "id": "e_r1",
+   "kind": "rogue",
+   "pos": [
+    59.0,
+    0.0,
+    9.0
+   ],
+   "rot": 270
+  },
+  {
+   "id": "e_g1",
+   "kind": "mage",
+   "pos": [
+    61.0,
+    0.0,
+    21.0
+   ],
+   "rot": 270
+  },
+  {
+   "id": "e_w1",
+   "kind": "warrior",
+   "pos": [
+    71.0,
+    0.0,
+    11.0
+   ],
+   "rot": 270
+  },
+  {
+   "id": "e_r2",
+   "kind": "rogue",
+   "pos": [
+    53.0,
+    0.0,
+    39.0
+   ],
+   "rot": 0,
+   "patrol": [
+    [
+     52.0,
+     38.0
+    ],
+    [
+     62.0,
+     38.0
+    ]
+   ]
+  },
+  {
+   "id": "e_r3",
+   "kind": "rogue",
+   "pos": [
+    61.0,
+    0.0,
+    49.0
+   ],
+   "rot": 270
+  },
+  {
+   "id": "e_g2",
+   "kind": "mage",
+   "pos": [
+    65.0,
+    0.0,
+    35.0
+   ],
+   "rot": 270
+  },
+  {
+   "id": "e_g3",
+   "kind": "mage",
+   "pos": [
+    65.0,
+    0.0,
+    53.0
+   ],
+   "rot": 270
+  },
+  {
+   "id": "e_m6",
+   "kind": "minion",
+   "pos": [
+    77.0,
+    0.0,
+    37.0
+   ],
+   "rot": 270
+  },
+  {
+   "id": "e_m7",
+   "kind": "minion",
+   "pos": [
+    81.0,
+    0.0,
+    37.0
+   ],
+   "rot": 270
+  },
+  {
+   "id": "e_g4",
+   "kind": "mage",
+   "pos": [
+    39.0,
+    0.0,
+    63.0
+   ],
+   "rot": 0
+  },
+  {
+   "id": "e_g5",
+   "kind": "mage",
+   "pos": [
+    45.0,
+    0.0,
+    65.0
+   ],
+   "rot": 0
+  },
+  {
+   "id": "e_m8",
+   "kind": "minion",
+   "pos": [
+    43.0,
+    0.0,
+    59.0
+   ],
+   "rot": 0
+  },
+  {
+   "id": "e_m9",
+   "kind": "minion",
+   "pos": [
+    55.0,
+    0.0,
+    59.0
+   ],
+   "rot": 90
+  },
+  {
+   "id": "e_m10",
+   "kind": "minion",
+   "pos": [
+    61.0,
+    0.0,
+    63.0
+   ],
+   "rot": 90
+  },
+  {
+   "id": "e_m11",
+   "kind": "minion",
+   "pos": [
+    65.0,
+    0.0,
+    59.0
+   ],
+   "rot": 180
+  },
+  {
+   "id": "e_r4",
+   "kind": "rogue",
+   "pos": [
+    77.0,
+    0.0,
+    61.0
+   ],
+   "rot": 270
+  },
+  {
+   "id": "e_w2",
+   "kind": "warrior",
+   "pos": [
+    97.0,
+    2.0,
+    33.0
+   ],
+   "rot": 270
+  },
+  {
+   "id": "e_w3",
+   "kind": "warrior",
+   "pos": [
+    105.0,
+    2.0,
+    39.0
+   ],
+   "rot": 270
+  },
+  {
+   "id": "e_w4",
+   "kind": "warrior",
+   "pos": [
+    97.0,
+    2.0,
+    45.0
+   ],
+   "rot": 0
+  },
+  {
+   "id": "e_m12",
+   "kind": "minion",
+   "pos": [
+    109.0,
+    2.0,
+    31.0
+   ],
+   "rot": 270
+  },
+  {
+   "id": "e_m13",
+   "kind": "minion",
+   "pos": [
+    109.0,
+    2.0,
+    47.0
+   ],
+   "rot": 270
+  },
+  {
+   "id": "twin_a",
+   "kind": "twin_blade",
+   "pos": [
+    95.0,
+    2.0,
+    65.0
+   ],
+   "rot": 0
+  },
+  {
+   "id": "twin_b",
+   "kind": "twin_blade",
+   "pos": [
+    105.0,
+    2.0,
+    65.0
+   ],
+   "rot": 0
+  }
+ ],
+ "braziers": [
+  {
+   "id": "b_hallA_w",
+   "pos": [
+    39.0,
+    0.0,
+    7.0
+   ]
+  },
+  {
+   "id": "b_hallA_e",
+   "pos": [
+    61.0,
+    0.0,
+    5.0
+   ]
+  },
+  {
+   "id": "b_hallB_n",
+   "pos": [
+    39.0,
+    0.0,
+    35.0
+   ]
+  },
+  {
+   "id": "b_hallB_s",
+   "pos": [
+    65.0,
+    0.0,
+    43.0
+   ]
+  },
+  {
+   "id": "b_chapel",
+   "pos": [
+    47.0,
+    0.0,
+    57.0
+   ]
+  },
+  {
+   "id": "b_hallD",
+   "pos": [
+    65.0,
+    0.0,
+    63.0
+   ],
+   "reveals": "secret_wall"
+  },
+  {
+   "id": "b_gauntlet",
+   "pos": [
+    111.0,
+    2.0,
+    49.0
+   ]
+  },
+  {
+   "id": "b_arena_1",
+   "pos": [
+    91.0,
+    2.0,
+    3.0
+   ],
+   "arena": true
+  },
+  {
+   "id": "b_arena_2",
+   "pos": [
+    109.0,
+    2.0,
+    3.0
+   ],
+   "arena": true
+  },
+  {
+   "id": "b_arena_3",
+   "pos": [
+    91.0,
+    2.0,
+    13.0
+   ],
+   "arena": true
+  },
+  {
+   "id": "b_arena_4",
+   "pos": [
+    109.0,
+    2.0,
+    13.0
+   ],
+   "arena": true
+  }
+ ],
+ "gates": [
+  {
+   "id": "gate_shortcut_entrance",
+   "kind": "shortcut",
+   "pos": [
+    27.0,
+    2.0,
+    37.0
+   ],
+   "rot": 90,
+   "open_side": 90
+  },
+  {
+   "id": "gate_shortcut_warden",
+   "kind": "shortcut",
+   "pos": [
+    89.0,
+    2.0,
+    61.0
+   ],
+   "rot": 90,
+   "open_side": 90
+  },
+  {
+   "id": "gate_sealed",
+   "kind": "locked",
+   "pos": [
+    99.0,
+    2.0,
+    27.0
+   ],
+   "rot": 0,
+   "unlock_boss": "twin_blades"
+  },
+  {
+   "id": "secret_wall",
+   "kind": "hidden",
+   "pos": [
+    69.0,
+    0.0,
+    65.0
+   ],
+   "rot": 90
+  }
+ ],
+ "fog_gate": {
+  "id": "fog_gate",
+  "pos": [
+   99.0,
+   2.0,
+   17.0
   ],
-  "shrines": [
-    {
-      "id": "shrine_test",
-      "name": "Test Shrine",
-      "pos": [
-        13.0,
-        0.0,
-        9.0
-      ],
-      "rot": 270
-    }
-  ],
-  "enemies": [
-    {
-      "id": "m1",
-      "kind": "minion",
-      "pos": [
-        5.0,
-        0.0,
-        10.0
-      ],
-      "rot": 90
-    }
-  ]
+  "rot": 0
+ },
+ "items": [
+  {
+   "id": "greataxe",
+   "kind": "weapon",
+   "model": "kaykit_adventures/items/axe_2handed.gltf",
+   "pos": [
+    75.0,
+    0.0,
+    9.0
+   ],
+   "rot": 30,
+   "label": "Take the greataxe"
+  },
+  {
+   "id": "shard_chapel",
+   "kind": "flask_shard",
+   "model": "quaternius_props/Potion_1.gltf",
+   "pos": [
+    41.0,
+    0.0,
+    67.0
+   ],
+   "label": "Pick up the Flask Shard"
+  },
+  {
+   "id": "shard_secret",
+   "kind": "flask_shard",
+   "model": "quaternius_props/Potion_1.gltf",
+   "pos": [
+    73.0,
+    0.0,
+    67.0
+   ],
+   "label": "Pick up the Flask Shard"
+  },
+  {
+   "id": "embers_gauntlet",
+   "kind": "embers",
+   "model": "kaykit_dungeon/coin_stack_large.gltf.glb",
+   "pos": [
+    111.0,
+    2.0,
+    29.0
+   ],
+   "label": "Take the embers"
+  }
+ ],
+ "hints": [
+  {
+   "pos": [
+    13.0,
+    2.0,
+    63.0
+   ],
+   "text": "Your lantern is your life. Guard its flame."
+  },
+  {
+   "pos": [
+    13.0,
+    2.0,
+    55.0
+   ],
+   "text": "Tap {Roll} to roll through danger. Hold it to sprint."
+  },
+  {
+   "pos": [
+    13.0,
+    2.0,
+    47.0
+   ],
+   "text": "{LockOn} locks on.  {Attack} light attack.  {Heavy} heavy (hold to charge)."
+  },
+  {
+   "pos": [
+    15.0,
+    2.0,
+    31.0
+   ],
+   "text": "Hold {Block} to raise your shield. Tap it just before a hit to parry."
+  },
+  {
+   "pos": [
+    15.0,
+    2.0,
+    19.0
+   ],
+   "text": "Rest at lantern shrines with {Interact}. The dead rise again."
+  },
+  {
+   "pos": [
+    25.0,
+    2.0,
+    37.0
+   ],
+   "text": "A gate. Perhaps it opens from the other side."
+  },
+  {
+   "pos": [
+    39.0,
+    0.0,
+    13.0
+   ],
+   "text": "The dark hides more than bones. Light the braziers."
+  },
+  {
+   "pos": [
+    45.0,
+    0.0,
+    43.0
+   ],
+   "text": "{Flask} drinks an oil flask and feeds your flame."
+  },
+  {
+   "pos": [
+    93.0,
+    2.0,
+    37.0
+   ],
+   "text": "Heavy blows break shields. Or strike from the side."
+  }
+ ],
+ "triggers": [
+  {
+   "id": "area_entrance",
+   "name": "Crypt Entrance",
+   "pos": [
+    13.0,
+    3.0,
+    63.0
+   ],
+   "size": [
+    12,
+    4,
+    12
+   ],
+   "music": "ambient"
+  },
+  {
+   "id": "area_ossuary",
+   "name": "Flooded Ossuary",
+   "pos": [
+    40.0,
+    1.0,
+    13.0
+   ],
+   "size": [
+    6,
+    3,
+    18
+   ],
+   "music": "ambient"
+  },
+  {
+   "id": "area_warden",
+   "name": "Warden's Hall",
+   "pos": [
+    92.0,
+    3.0,
+    38.0
+   ],
+   "size": [
+    8,
+    4,
+    8
+   ],
+   "music": "ambient"
+  }
+ ],
+ "lights": [
+  {
+   "pos": [
+    8.25,
+    3.5,
+    63.0
+   ],
+   "preset": "torch_light",
+   "id": "torch_0"
+  },
+  {
+   "pos": [
+    17.75,
+    3.5,
+    59.0
+   ],
+   "preset": "torch_light",
+   "id": "torch_1"
+  },
+  {
+   "pos": [
+    10.25,
+    3.5,
+    51.0
+   ],
+   "preset": "torch_light",
+   "id": "torch_2"
+  },
+  {
+   "pos": [
+    4.25,
+    3.5,
+    37.0
+   ],
+   "preset": "torch_light",
+   "id": "torch_3"
+  },
+  {
+   "pos": [
+    25.75,
+    3.5,
+    33.0
+   ],
+   "preset": "torch_light",
+   "id": "torch_4"
+  },
+  {
+   "pos": [
+    4.25,
+    3.5,
+    17.0
+   ],
+   "preset": "torch_light",
+   "id": "torch_5"
+  },
+  {
+   "pos": [
+    25.75,
+    3.5,
+    19.0
+   ],
+   "preset": "torch_light",
+   "id": "torch_6"
+  },
+  {
+   "pos": [
+    33.0,
+    3.5,
+    12.25
+   ],
+   "preset": "torch_light",
+   "id": "torch_7"
+  },
+  {
+   "pos": [
+    90.25,
+    3.5,
+    31.0
+   ],
+   "preset": "torch_light",
+   "id": "torch_8"
+  },
+  {
+   "pos": [
+    111.75,
+    3.5,
+    35.0
+   ],
+   "preset": "torch_light",
+   "id": "torch_9"
+  },
+  {
+   "pos": [
+    90.25,
+    3.5,
+    45.0
+   ],
+   "preset": "torch_light",
+   "id": "torch_10"
+  },
+  {
+   "pos": [
+    90.25,
+    3.5,
+    57.0
+   ],
+   "preset": "torch_light",
+   "id": "torch_11"
+  },
+  {
+   "pos": [
+    109.75,
+    3.5,
+    57.0
+   ],
+   "preset": "torch_light",
+   "id": "torch_12"
+  },
+  {
+   "pos": [
+    92.25,
+    3.5,
+    21.0
+   ],
+   "preset": "torch_light",
+   "id": "torch_13"
+  },
+  {
+   "pos": [
+    107.75,
+    3.5,
+    21.0
+   ],
+   "preset": "torch_light",
+   "id": "torch_14"
+  }
+ ],
+ "props": [
+  {
+   "model": "kaykit_dungeon/barrel_large.gltf.glb",
+   "pos": [
+    9.0,
+    2.0,
+    67.0
+   ],
+   "rot": 10,
+   "collide": true
+  },
+  {
+   "model": "kaykit_dungeon/crates_stacked.gltf.glb",
+   "pos": [
+    17.0,
+    2.0,
+    67.0
+   ],
+   "rot": -15,
+   "collide": true
+  },
+  {
+   "model": "kaykit_dungeon/pillar.gltf.glb",
+   "pos": [
+    9.0,
+    2.0,
+    35.0
+   ],
+   "rot": 0,
+   "collide": true
+  },
+  {
+   "model": "kaykit_dungeon/pillar.gltf.glb",
+   "pos": [
+    21.0,
+    2.0,
+    35.0
+   ],
+   "rot": 0,
+   "collide": true
+  },
+  {
+   "model": "kaykit_dungeon/pillar.gltf.glb",
+   "pos": [
+    9.0,
+    2.0,
+    43.0
+   ],
+   "rot": 0,
+   "collide": true
+  },
+  {
+   "model": "kaykit_dungeon/pillar.gltf.glb",
+   "pos": [
+    21.0,
+    2.0,
+    43.0
+   ],
+   "rot": 0,
+   "collide": true
+  },
+  {
+   "model": "kaykit_dungeon/table_long_broken.gltf.glb",
+   "pos": [
+    23.0,
+    2.0,
+    43.0
+   ],
+   "rot": 90,
+   "collide": true
+  },
+  {
+   "model": "kaykit_dungeon/sword_shield_broken.gltf.glb",
+   "pos": [
+    7.0,
+    2.0,
+    31.0
+   ],
+   "rot": 30,
+   "collide": false
+  },
+  {
+   "model": "kaykit_dungeon/bed_decorated.gltf.glb",
+   "pos": [
+    23.0,
+    2.0,
+    9.0
+   ],
+   "rot": 180,
+   "collide": true
+  },
+  {
+   "model": "kaykit_dungeon/shelf_small_candles.gltf.glb",
+   "pos": [
+    5.0,
+    2.0,
+    9.0
+   ],
+   "rot": 90,
+   "collide": true
+  },
+  {
+   "model": "kaykit_dungeon/barrel_small_stack.gltf.glb",
+   "pos": [
+    25.0,
+    2.0,
+    23.0
+   ],
+   "rot": 0,
+   "collide": true
+  },
+  {
+   "model": "kaykit_dungeon/pillar_decorated.gltf.glb",
+   "pos": [
+    43.0,
+    0.0,
+    9.0
+   ],
+   "rot": 0,
+   "collide": true
+  },
+  {
+   "model": "kaykit_dungeon/pillar_decorated.gltf.glb",
+   "pos": [
+    57.0,
+    0.0,
+    9.0
+   ],
+   "rot": 0,
+   "collide": true
+  },
+  {
+   "model": "kaykit_dungeon/pillar_decorated.gltf.glb",
+   "pos": [
+    43.0,
+    0.0,
+    19.0
+   ],
+   "rot": 0,
+   "collide": true
+  },
+  {
+   "model": "kaykit_dungeon/pillar_decorated.gltf.glb",
+   "pos": [
+    57.0,
+    0.0,
+    19.0
+   ],
+   "rot": 0,
+   "collide": true
+  },
+  {
+   "model": "kaykit_dungeon/rubble_half.gltf.glb",
+   "pos": [
+    63.0,
+    0.0,
+    15.0
+   ],
+   "rot": 90,
+   "collide": true
+  },
+  {
+   "model": "kaykit_dungeon/coin_stack_small.gltf.glb",
+   "pos": [
+    53.0,
+    0.0,
+    7.0
+   ],
+   "rot": 0,
+   "collide": false
+  },
+  {
+   "model": "kaykit_dungeon/chest_gold.glb",
+   "pos": [
+    77.0,
+    0.0,
+    15.0
+   ],
+   "rot": 270,
+   "collide": true
+  },
+  {
+   "model": "quaternius_props/WeaponStand.gltf",
+   "pos": [
+    75.0,
+    0.0,
+    7.0
+   ],
+   "rot": 0,
+   "collide": false,
+   "scale": 1.4
+  },
+  {
+   "model": "kaykit_dungeon/column.gltf.glb",
+   "pos": [
+    45.0,
+    0.0,
+    37.0
+   ],
+   "rot": 0,
+   "collide": true
+  },
+  {
+   "model": "kaykit_dungeon/column.gltf.glb",
+   "pos": [
+    59.0,
+    0.0,
+    37.0
+   ],
+   "rot": 0,
+   "collide": true
+  },
+  {
+   "model": "kaykit_dungeon/column.gltf.glb",
+   "pos": [
+    53.0,
+    0.0,
+    47.0
+   ],
+   "rot": 0,
+   "collide": true
+  },
+  {
+   "model": "kaykit_dungeon/rubble_large.gltf.glb",
+   "pos": [
+    57.0,
+    0.0,
+    51.0
+   ],
+   "rot": 20,
+   "collide": true
+  },
+  {
+   "model": "kaykit_dungeon/barrier_column.gltf.glb",
+   "pos": [
+    39.0,
+    0.0,
+    43.0
+   ],
+   "rot": 0,
+   "collide": true
+  },
+  {
+   "model": "quaternius_props/CandleStick_Stand.gltf",
+   "pos": [
+    47.0,
+    0.0,
+    45.0
+   ],
+   "rot": 0,
+   "collide": false,
+   "scale": 1.4
+  },
+  {
+   "model": "quaternius_props/Chandelier.gltf",
+   "pos": [
+    43.0,
+    0.0,
+    61.0
+   ],
+   "rot": 0,
+   "collide": false,
+   "scale": 1.3
+  },
+  {
+   "model": "kaykit_dungeon/trunk_large_A.gltf.glb",
+   "pos": [
+    71.0,
+    0.0,
+    69.0
+   ],
+   "rot": 0,
+   "collide": true
+  },
+  {
+   "model": "quaternius_props/Cage_Small.gltf",
+   "pos": [
+    55.0,
+    0.0,
+    65.0
+   ],
+   "rot": 0,
+   "collide": true,
+   "scale": 1.6
+  },
+  {
+   "model": "kaykit_dungeon/pillar.gltf.glb",
+   "pos": [
+    95.0,
+    2.0,
+    35.0
+   ],
+   "rot": 0,
+   "collide": true
+  },
+  {
+   "model": "kaykit_dungeon/pillar.gltf.glb",
+   "pos": [
+    107.0,
+    2.0,
+    35.0
+   ],
+   "rot": 0,
+   "collide": true
+  },
+  {
+   "model": "kaykit_dungeon/pillar.gltf.glb",
+   "pos": [
+    95.0,
+    2.0,
+    43.0
+   ],
+   "rot": 0,
+   "collide": true
+  },
+  {
+   "model": "kaykit_dungeon/pillar.gltf.glb",
+   "pos": [
+    107.0,
+    2.0,
+    43.0
+   ],
+   "rot": 0,
+   "collide": true
+  },
+  {
+   "model": "kaykit_dungeon/banner_patternA_red.gltf.glb",
+   "pos": [
+    101.0,
+    2.0,
+    28.3
+   ],
+   "rot": 0,
+   "collide": false
+  },
+  {
+   "model": "kaykit_dungeon/pillar_decorated.gltf.glb",
+   "pos": [
+    93.0,
+    2.0,
+    59.0
+   ],
+   "rot": 0,
+   "collide": true
+  },
+  {
+   "model": "kaykit_dungeon/pillar_decorated.gltf.glb",
+   "pos": [
+    107.0,
+    2.0,
+    59.0
+   ],
+   "rot": 0,
+   "collide": true
+  },
+  {
+   "model": "kaykit_dungeon/sword_shield_gold.gltf.glb",
+   "pos": [
+    101.0,
+    2.0,
+    69.0
+   ],
+   "rot": 0,
+   "collide": false
+  },
+  {
+   "model": "kaykit_dungeon/pillar_decorated.gltf.glb",
+   "pos": [
+    93.0,
+    2.0,
+    5.0
+   ],
+   "rot": 0,
+   "collide": true
+  },
+  {
+   "model": "kaykit_dungeon/pillar_decorated.gltf.glb",
+   "pos": [
+    107.0,
+    2.0,
+    5.0
+   ],
+   "rot": 0,
+   "collide": true
+  },
+  {
+   "model": "kaykit_dungeon/pillar_decorated.gltf.glb",
+   "pos": [
+    93.0,
+    2.0,
+    11.0
+   ],
+   "rot": 0,
+   "collide": true
+  },
+  {
+   "model": "kaykit_dungeon/pillar_decorated.gltf.glb",
+   "pos": [
+    107.0,
+    2.0,
+    11.0
+   ],
+   "rot": 0,
+   "collide": true
+  }
+ ]
 }

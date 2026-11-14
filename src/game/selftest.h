@@ -7,4 +7,6 @@ struct Ctx;
 int RunCombatSelfTest(Ctx& ctx);
 // Enemy AI scenarios on data/levels/test_arena.json (tokens, shield, posture, mage, rogue, embers).
 int RunEnemySelfTest(Ctx& ctx);
+// World scenarios on data/levels/zone.json (braziers, secret, shortcuts, pickups, mini-boss).
+int RunWorldSelfTest(Ctx& ctx);
 }  // namespace lk

@@ -34,6 +34,7 @@ struct EnemyMove {
 
 struct EnemyDef {
     std::string key, name, model, brain;
+    std::string bossGroup, bossName;   // mini-boss / boss grouping for the boss bar
     json anims;
     float hp = 50, posture = 50, postureDecay = 10, postureDelay = 1.6f, staggerTime = 1.5f;
     int embers = 20;
@@ -123,6 +124,7 @@ public:
     void Step(const EnemyEnv& env, float dt, FxQueue& fx);
     void Draw(class Renderer& r, float alpha, float time) const;
     void Respawn();
+    void Kill();   // instantly dead (defeated bosses on load)
 
     // Player strike on this enemy (already confirmed to overlap the hurtbox).
     StrikeResult TakeStrike(const PlayerStrike& s, float critMult, FxQueue& fx);

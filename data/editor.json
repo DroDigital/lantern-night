@@ -1,0 +1,13 @@
+{
+  "_doc": "F2 level editor palettes (debug builds).",
+  "props": [
+    "kaykit_dungeon/pillar.gltf.glb", "kaykit_dungeon/pillar_decorated.gltf.glb", "kaykit_dungeon/column.gltf.glb",
+    "kaykit_dungeon/barrel_large.gltf.glb", "kaykit_dungeon/barrel_small_stack.gltf.glb", "kaykit_dungeon/crates_stacked.gltf.glb",
+    "kaykit_dungeon/rubble_half.gltf.glb", "kaykit_dungeon/rubble_large.gltf.glb", "kaykit_dungeon/table_long_broken.gltf.glb",
+    "kaykit_dungeon/chest.glb", "kaykit_dungeon/trunk_large_A.gltf.glb", "kaykit_dungeon/banner_patternA_red.gltf.glb",
+    "kaykit_dungeon/sword_shield_broken.gltf.glb", "kaykit_dungeon/candle_triple.gltf.glb", "kaykit_dungeon/torch_mounted.gltf.glb",
+    "quaternius_props/CandleStick_Stand.gltf", "quaternius_props/Chandelier.gltf", "quaternius_props/Cage_Small.gltf",
+    "quaternius_props/Vase_Rubble_Medium.gltf", "quaternius_props/WeaponStand.gltf"
+  ],
+  "enemy_kinds": ["minion", "warrior", "rogue", "mage"]
+}

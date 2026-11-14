@@ -58,3 +58,16 @@ TEST_CASE("zone round-trips through json") {
     CHECK(b.enemies[0].pos.x == a.enemies[0].pos.x);
     CHECK(b.playerYaw == a.playerYaw);
 }
+
+TEST_CASE("SetTile grows layers in every direction") {
+    ZoneData z;
+    std::string err;
+    REQUIRE(ParseZone(MiniZone(), z, err));
+    SetTile(z, 0, -2, -1, '.');
+    CHECK(z.KindAt(0, -2, -1) == TileKind::Floor);
+    CHECK(z.KindAt(0, 1, 1) == TileKind::Stairs);  // existing tiles keep their world cells
+    SetTile(z, 0, 9, 7, '#');
+    CHECK(z.KindAt(0, 9, 7) == TileKind::Wall);
+    SetTile(z, 3, 4, 4, '.');
+    CHECK(z.KindAt(3, 4, 4) == TileKind::Floor);
+}

@@ -1,6 +1,7 @@
 #pragma once
 // A play session in one zone: world, player, enemies, camera, lights, effects and HUD.
 // Runs on a fixed 60 Hz step; hitstop scales the simulation clock, never the frame rate.
+#include <functional>
 #include <map>
 #include <memory>
 #include <string>
@@ -19,6 +20,7 @@
 #include "game/player/player.h"
 #include "game/ui/hud.h"
 #include "game/ui/menus.h"
+#include "game/world/interactables.h"
 #include "game/world/world.h"
 
 namespace lk {
@@ -40,6 +42,12 @@ struct Shrine {
     int light = -1;   // index into zoneLights_
 };
 
+struct BossBar {
+    bool active = false;
+    std::string name;
+    float hp = 1;
+};
+
 struct Projectile {
     Vector3 pos, vel;
     float life;
@@ -53,6 +61,11 @@ public:
     explicit Session(Ctx& ctx);
     ~Session();
     bool Load(const std::string& zoneFile);
+    bool LoadZone(const ZoneData& zone);
+    // Editor hooks: render from another camera and draw an overlay inside the 3D pass.
+    void SetCameraOverride(const Camera3D* cam) { camOverride_ = cam; }
+    void SetOverlay(std::function<void(Renderer&)> f) { overlay_ = std::move(f); }
+    void SetHudVisible(bool v) { hudVisible_ = v; }
     void ReloadTunables();
 
     // Real-time advance: runs as many fixed steps as the (hitstop-scaled) clock allows.
@@ -89,6 +102,10 @@ public:
     int RestCount() const { return restCount_; }
     int DeathCount() const { return deathCount_; }
     const std::vector<Shrine>& Shrines() const { return shrines_; }
+    std::vector<Brazier>& Braziers() { return braziers_; }
+    std::vector<Gate>& Gates() { return gates_; }
+    std::vector<Pickup>& Pickups() { return pickups_; }
+    const BossBar& Boss() const { return bossBar_; }
     // Interact with whatever is in range right now (also used by the smoke-test bot).
     std::string InteractPromptTarget() const { return promptTarget_; }
     void OpenPause() { menu_ = Menu::Pause; ctx_.ui.ResetFocus(); }
@@ -116,6 +133,20 @@ private:
     void DrawInteractables(Renderer& r);
     void RenderMenus();
     bool EquipWeapon(const std::string& key);
+    // session_interactables.cpp
+    void BuildWorldObjects();
+    void ApplyWorldProgress();
+    void SetGateOpen(Gate& g, bool open, bool instant);
+    void LightBrazier(Brazier& b);
+    void ShowToast(const std::string& text);
+    void SnuffArenaBraziers(bool snuff);
+    bool UpdateWorldInteract();
+    void FinishWorldInteract();
+    void UpdateWorldObjects(float dt);
+    void UpdateBossGroups();
+    void DrawWorldObjects(Renderer& r);
+    void DrawWorldAdditive(Renderer& r);
+    void EnterFogGate(Gate& g);
     void RenderDebug(int sw, int sh);
 
     Ctx& ctx_;
@@ -165,11 +196,24 @@ private:
     std::string pendingInteract_;
     float pileGlow_ = 0;
     json world_cfg_;
+    std::vector<Brazier> braziers_;
+    std::vector<Gate> gates_;
+    std::vector<Pickup> pickups_;
+    std::vector<FloorHint> hints_;
+    std::vector<AreaTrigger> triggers_;
+    std::string pendingBrazier_, pendingGate_;
+    std::string toast_, areaBanner_, hintText_, currentArea_;
+    float toastTime_ = 0, areaBannerTime_ = 0;
+    BossBar bossBar_;
+    float bossTrail_ = 1;
     bool showDebug_ = false;
     float drawDistance_ = 34.0f;
     Vector3 blobTune_{0.55f, 0.65f, 0};
     float alpha_ = 1.0f;
     std::map<int, float> barTimers_;
+    const Camera3D* camOverride_ = nullptr;
+    std::function<void(Renderer&)> overlay_;
+    bool hudVisible_ = true;
 };
 
 }  // namespace lk

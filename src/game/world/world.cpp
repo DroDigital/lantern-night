@@ -42,6 +42,13 @@ World::~World() { Unload(); }
 void World::Unload() {
     for (auto& c : chunks_)
         for (auto& m : c.meshes) UnloadMesh(m);
+    for (auto& m : water_) UnloadMesh(m);
+    water_.clear();
+    if (hasWaterMat_) {
+        waterMat_.shader = Shader{rlGetShaderIdDefault(), rlGetShaderLocsDefault()};
+        UnloadMaterial(waterMat_);
+        hasWaterMat_ = false;
+    }
     chunks_.clear();
     props_.clear();
     pieceCount_ = 0;
@@ -258,6 +265,7 @@ bool World::Build(const ZoneData& zone, AssetCache& assets, Physics& physics) {
     BuildWalls(pieces, physics);
     pieceCount_ = int(pieces.size());
     BuildChunks(pieces);
+    BuildWater();
 
     for (const auto& p : zone_.props) {
         WorldProp wp;
@@ -294,6 +302,63 @@ void World::Draw(Renderer& r, Vector3 camPos, float drawDistance) const {
         if (Vector3Distance(pr.pos, camPos) > drawDistance + pr.radius) continue;
         r.DrawModel(*pr.asset, pr.world, nullptr, p);
     }
+}
+
+void World::BuildWater() {
+    // One quad per water cell, merged into meshes of up to 4000 quads.
+    std::vector<float> pos, nrm, uv;
+    std::vector<unsigned short> idx;
+    auto flush = [&]() {
+        if (pos.empty()) return;
+        Mesh m{};
+        m.vertexCount = int(pos.size() / 3);
+        m.triangleCount = int(idx.size() / 3);
+        m.vertices = static_cast<float*>(MemAlloc(unsigned(pos.size() * sizeof(float))));
+        m.normals = static_cast<float*>(MemAlloc(unsigned(nrm.size() * sizeof(float))));
+        m.texcoords = static_cast<float*>(MemAlloc(unsigned(uv.size() * sizeof(float))));
+        m.indices = static_cast<unsigned short*>(MemAlloc(unsigned(idx.size() * sizeof(unsigned short))));
+        std::memcpy(m.vertices, pos.data(), pos.size() * sizeof(float));
+        std::memcpy(m.normals, nrm.data(), nrm.size() * sizeof(float));
+        std::memcpy(m.texcoords, uv.data(), uv.size() * sizeof(float));
+        std::memcpy(m.indices, idx.data(), idx.size() * sizeof(unsigned short));
+        UploadMesh(&m, false);
+        water_.push_back(m);
+        pos.clear();
+        nrm.clear();
+        uv.clear();
+        idx.clear();
+    };
+    for (const auto& layer : zone_.layers)
+        for (int lz = 0; lz < layer.Depth(); ++lz)
+            for (int lx = 0; lx < int(layer.rows[size_t(lz)].size()); ++lx) {
+                const LegendEntry* e = zone_.Legend(layer.rows[size_t(lz)][size_t(lx)]);
+                if (!e || !e->water) continue;
+                int cx = layer.originX + lx, cz = layer.originZ + lz;
+                float x0 = float(cx) * zone_.cellSize, z0 = float(cz) * zone_.cellSize, x1 = x0 + zone_.cellSize, z1 = z0 + zone_.cellSize;
+                float y = float(layer.level) * zone_.layerHeight + 0.09f;
+                unsigned short b = (unsigned short)(pos.size() / 3);
+                pos.insert(pos.end(), {x0, y, z0, x0, y, z1, x1, y, z1, x1, y, z0});
+                for (int k = 0; k < 4; ++k) nrm.insert(nrm.end(), {0, 1, 0});
+                uv.insert(uv.end(), {0, 0, 0, 1, 1, 1, 1, 0});
+                idx.insert(idx.end(), {b, (unsigned short)(b + 1), (unsigned short)(b + 2), b, (unsigned short)(b + 2), (unsigned short)(b + 3)});
+                if (pos.size() / 3 > 16000) flush();
+            }
+    flush();
+    if (!water_.empty()) {
+        waterMat_ = LoadMaterialDefault();
+        waterMat_.maps[MATERIAL_MAP_DIFFUSE].color = Color{50, 95, 125, 255};
+        hasWaterMat_ = true;
+    }
+}
+
+void World::DrawWater(Renderer& r, Vector3 camPos, float drawDistance, float time) const {
+    if (water_.empty()) return;
+    DrawParams p;
+    p.opacity = 0.72f;
+    p.emissive = Vector3{0.004f, 0.008f, 0.012f};
+    (void)time;
+    (void)drawDistance;
+    for (const auto& m : water_) r.DrawStaticMesh(m, waterMat_, MatrixIdentity(), camPos, p);
 }
 
 float World::FloorHeightAt(float x, float y, float z) const {

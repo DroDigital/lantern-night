@@ -164,6 +164,38 @@ bool ParseZone(const json& j, ZoneData& z, std::string& err) {
     return true;
 }
 
+void SetTile(ZoneData& z, int level, int cx, int cz, char c) {
+    ZoneLayer* L = nullptr;
+    for (auto& l : z.layers)
+        if (l.level == level) L = &l;
+    if (!L) {
+        ZoneLayer nl;
+        nl.name = "level" + std::to_string(level);
+        nl.level = level;
+        nl.originX = cx;
+        nl.originZ = cz;
+        nl.rows = {std::string(1, ' ')};
+        z.layers.push_back(nl);
+        L = &z.layers.back();
+    }
+    // Grow toward negative coordinates by shifting the origin.
+    if (cx < L->originX) {
+        int add = L->originX - cx;
+        for (auto& r : L->rows) r.insert(0, size_t(add), ' ');
+        L->originX = cx;
+    }
+    if (cz < L->originZ) {
+        int add = L->originZ - cz;
+        L->rows.insert(L->rows.begin(), size_t(add), std::string());
+        L->originZ = cz;
+    }
+    int lz = cz - L->originZ, lx = cx - L->originX;
+    if (lz >= int(L->rows.size())) L->rows.resize(size_t(lz + 1));
+    std::string& row = L->rows[size_t(lz)];
+    if (lx >= int(row.size())) row.resize(size_t(lx + 1), ' ');
+    row[size_t(lx)] = c;
+}
+
 json PlacementToJson(const Placement& p) {
     json e = p.extra.is_object() ? p.extra : json::object();
     if (!p.id.empty()) e["id"] = p.id;

@@ -52,6 +52,8 @@ bool EnemyDef::Load(const std::string& k, const json& j, const json& animMap) {
     name = j.value("name", k);
     model = j.value("model", "");
     brain = j.value("brain", "melee");
+    bossGroup = j.value("boss_group", "");
+    bossName = j.value("boss_name", name);
     hp = j.value("hp", hp);
     posture = j.value("posture", posture);
     postureDecay = j.value("posture_decay", postureDecay);
@@ -209,6 +211,15 @@ void Enemy::Respawn() {
     vis_.Anim().SetSpeedScale(1.0f);
     ChangeState(EState::Idle);
     vis_.Play("idle", 0.0f, true, Rand() * 0.5f);
+}
+
+void Enemy::Kill() {
+    hp_ = 0;
+    swing_.Stop();
+    ChangeState(EState::Dead);
+    stateTime_ = 100.0f;
+    if (body_) body_->SetEnabled(false);
+    vis_.Play("death", 0.0f, true, 100.0f);
 }
 
 void Enemy::SetDormant(bool d) {

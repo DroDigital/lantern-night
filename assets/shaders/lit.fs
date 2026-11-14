@@ -24,6 +24,8 @@ uniform vec3 rimColor;
 uniform float rimStrength;
 uniform float minLight;
 uniform float lightFalloff;
+uniform float opacity;
+uniform float time;
 out vec4 finalColor;
 
 void main() {
@@ -37,6 +39,7 @@ void main() {
     vec3 V = toEye / max(dist, 0.0001);
 
     vec3 light = ambientColor * (0.75 + 0.25 * N.y);
+    vec3 spec = vec3(0.0);
     for (int i = 0; i < MAX_LIGHTS; ++i) {
         if (i >= lightCount) break;
         vec3 L = lightPos[i] - fragPosition;
@@ -49,8 +52,15 @@ void main() {
         // wrapped diffuse keeps the chunky shapes soft and readable
         float ndl = clamp(dot(N, L) * 0.7 + 0.3, 0.0, 1.0);
         light += lightColor[i] * att * ndl;
+        if (opacity < 0.99) {
+            // Water: sharp glints of the lights, gently rippled.
+            vec3 Nw = normalize(N + vec3(sin(fragPosition.x * 3.1 + fragPosition.z * 1.7 + time * 1.3),
+                                         0.0, cos(fragPosition.z * 2.7 - fragPosition.x * 1.3 + time * 1.1)) * 0.06);
+            vec3 H = normalize(L + V);
+            spec += lightColor[i] * att * pow(max(dot(Nw, H), 0.0), 48.0) * 5.0;
+        }
     }
-    vec3 col = albedo * light;
+    vec3 col = albedo * light + spec;
     float rim = pow(1.0 - clamp(dot(N, V), 0.0, 1.0), 3.0);
     col += rimColor * rim * rimStrength;
     col = max(col, albedo * minLight);
@@ -61,5 +71,5 @@ void main() {
     float fog = clamp(fogD * (0.55 + 0.45 * fogH), 0.0, 1.0);
     col = mix(col, fogColor, fog);
     col = mix(col, vec3(1.4), clamp(hitFlash, 0.0, 1.0) * 0.55);
-    finalColor = vec4(col, 1.0);
+    finalColor = vec4(col, opacity <= 0.0 ? 1.0 : opacity);
 }

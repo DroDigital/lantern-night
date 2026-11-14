@@ -48,6 +48,10 @@ public:
     // Input prompt glyph for an action on the last-used device.
     void Glyph(Act a, float x, float y, float size);
     void Prompt(Act a, const std::string& label, float x, float y, float size);
+    // Short button name for the last-used device ("RB", "R1", "LMB", ...).
+    std::string ActionLabel(Act a) const;
+    // Replace {Attack}, {Roll}, ... tokens with ActionLabel names.
+    std::string ExpandTokens(const std::string& text) const;
 
     Font& GetFont() { return font_; }
 

@@ -40,3 +40,11 @@ Ambiguities resolved during development, simplest option first.
 - **Enemy shields** (warrior) block light attacks from the front within their arc; heavies go through and deal big posture damage.
 - **Lock-on** adds an over-the-shoulder camera offset so the target is not hidden behind the knight.
 - **Hitstop** sets the simulation time scale to `hitstop_time_scale` (0) for the event's duration in real time; rendering keeps running at full frame rate.
+
+## World (M4)
+- **Zone authoring:** `tools/zone_src/build_zone.py` lists the hand-designed rooms as rectangles of cells and every placement explicitly, and rasterises them into the ASCII layers. It is an authoring aid, not runtime generation; the game only reads `zone.json`, and the F2 editor edits that file directly (re-running the script would overwrite editor tweaks).
+- **Two height layers** keep the map readable: the Crypt Entrance and Warden's Hall share the upper layer on opposite sides, the Flooded Ossuary sits on the lower layer between them. Stairs are always placed on the lower layer and rise onto the upper one.
+- **Gates** occupy a passage cell. A shortcut opens only when the knight stands on its `open_side`; from the other side it says it does not open. Hidden walls are gates of kind `hidden` opened by a brazier's `reveals`. The sealed gate is a `locked` gate with `unlock_boss`.
+- **Mini-boss groups:** enemies with the same `boss_group` share one boss bar and count as one boss; once all fall the group is saved in `defeated_bosses` and never respawns.
+- **Water** is a translucent plane over flooded cells drawn with the lit shader at reduced opacity, plus a rippled specular term so the lantern glints on it. Movement is not slowed.
+- **Floor hints** use `{Action}` tokens replaced with the last-used device's button names.

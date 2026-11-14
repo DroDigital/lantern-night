@@ -98,10 +98,16 @@ bool Session::Load(const std::string& zoneFile) {
         LK_ERROR("zone %s: %s", zoneFile.c_str(), err.c_str());
         return false;
     }
+    return LoadZone(zone);
+}
+
+bool Session::LoadZone(const ZoneData& zone) {
+    ctx_.physics.ClearToggles();
     if (!world_.Build(zone, ctx_.assets, ctx_.physics)) return false;
     nav_.Build(zone);
     BuildLights();
     BuildInteractables();
+    BuildWorldObjects();
     lanternMesh_.Init();
     feel_ = ctx_.data.Get("feel.json");
     particles_.Init(feel_.value("particle_cap", 3000));
@@ -113,6 +119,7 @@ bool Session::Load(const std::string& zoneFile) {
     ReloadTunables();
     SpawnEnemies();
     ApplyProgress();
+    ApplyWorldProgress();
     float yaw = zone.playerYaw;
     spawn = RespawnPoint(&yaw);
     player_.Teleport(spawn, yaw);
@@ -570,6 +577,7 @@ void Session::Step(const InputFrame& in, float dt) {
     player_.Step(pin, pe, dt, fx_);
     UpdateInteract(pin, dt);
     UpdateDeath(dt);
+    UpdateWorldObjects(dt);
 
     EnemyEnv ee;
     ee.playerPos = player_.Pos();
@@ -651,8 +659,9 @@ void Session::Render(float alpha, int sw, int sh) {
     s.vignette = baseV + (lantern_.lowVignette - baseV) * low;
     s.vignetteRadius = baseR + (lantern_.lowVignetteRadius - baseR) * low;
 
-    Camera3D cam = cam_.Cam();
+    Camera3D cam = camOverride_ ? *camOverride_ : cam_.Cam();
     Renderer& r = ctx_.renderer;
+    r.SetTime(realTime_);
     r.BeginScene(cam);
     world_.Draw(r, cam.position, drawDistance_);
     Vector3 pp = player_.RenderPos(alpha);
@@ -663,22 +672,28 @@ void Session::Render(float alpha, int sw, int sh) {
     lanternMesh_.Draw(r, player_.LanternPos(), player_.Yaw(), player_.FlameFrac(), lanternState_.flicker,
                       Vector3{1.0f, 0.55f, 0.2f});
     DrawInteractables(r);
+    DrawWorldObjects(r);
+    world_.DrawWater(r, cam.position, drawDistance_, realTime_);
     // Additive pass: halos, shafts, trails, particles, bolts.
     r.DrawHalo(player_.LanternPos(), lantern_.haloSize * (0.8f + 0.2f * lanternState_.flicker), Color{255, 170, 90, 255},
                lantern_.haloIntensity * lanternState_.flicker * (0.3f + 0.7f * player_.FlameFrac()));
     for (const auto& z : zoneLights_)
         if (z.halo) r.DrawHalo(z.light.pos, 0.9f, Color{255, 150, 70, 255}, 1.4f * Flicker(realTime_, 8.0f, z.flicker, z.seed));
     for (const auto& p : projectiles_) r.DrawHalo(p.pos, p.def->boltRadius * 5.0f, Color{120, 170, 255, 255}, 3.0f);
+    DrawWorldAdditive(r);
     if (ctx_.state.progress.pile.active) {
         const auto& pl = ctx_.state.progress.pile;
         r.DrawHalo(Vector3{pl.x, pl.y + 0.3f, pl.z}, 1.1f, Color{255, 140, 50, 255}, 1.8f * Flicker(realTime_, 5.0f, 0.2f, 1.0f));
     }
     player_.DrawTrail(simTime_, trailShader_, trailIntensityLoc_);
     particles_.Draw(cam);
+    if (overlay_) overlay_(r);
     r.EndScene();
     r.Present(sw, sh, flash_, flashColor_);
-    RenderHud(sw, sh);
-    RenderMenus();
+    if (hudVisible_) {
+        RenderHud(sw, sh);
+        RenderMenus();
+    }
     if (showDebug_) RenderDebug(sw, sh);
 }
 
@@ -695,9 +710,24 @@ void Session::RenderHud(int sw, int sh) {
     hs.flaskMax = player_.flaskMax;
     hs.embers = ctx_.state.progress.embers;
     hs.prompt = promptText_;
+    hs.bossActive = bossBar_.active;
+    hs.bossName = bossBar_.name;
+    hs.bossHp = bossBar_.hp;
+    bossTrail_ = bossBar_.hp >= bossTrail_ ? bossBar_.hp : std::max(bossBar_.hp, bossTrail_ - 0.004f);
+    hs.bossTrail = bossTrail_;
     hs.emberFlash = emberFlash_;
     hs.lowFlamePulse = std::clamp(1.0f - player_.FlameFrac() / std::max(lantern_.sputterBelow, 0.01f), 0.0f, 1.0f);
     DrawHud(ui, hs, realTime_);
+    if (toastTime_ > 0) {
+        float a = std::clamp(toastTime_ * 2.0f, 0.0f, 1.0f);
+        ui.Text(toast_, ui.W() * 0.5f, ui.H() * 0.80f, 32, Color{255, 220, 170, (unsigned char)(a * 255)}, Align::Center);
+    }
+    if (areaBannerTime_ > 0) {
+        float a = std::clamp(std::min(areaBannerTime_, 3.5f - areaBannerTime_) * 2.0f, 0.0f, 1.0f);
+        ui.Text(areaBanner_, ui.W() * 0.5f, 150, 56, Color{235, 215, 190, (unsigned char)(a * 255)}, Align::Center);
+    }
+    if (!hintText_.empty() && promptText_.empty())
+        ui.Text(ui.ExpandTokens(hintText_), ui.W() * 0.5f, ui.H() * 0.86f, 28, Color{255, 190, 120, 230}, Align::Center);
     // Small bars over recently damaged enemies.
     Camera3D cam = cam_.Cam();
     for (auto& e : enemies_) {

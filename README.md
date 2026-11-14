@@ -38,7 +38,9 @@ ctest --preset release
 ```
 
 The game is `build/release/bin/LanternKnight` (`LanternKnight.exe`, or `LanternKnight.app` on macOS).
-Debug builds (`--preset debug`) enable F1 (debug overlay), F2 (level editor) and F5 (hot-reload data and shaders).
+Debug builds (`--preset debug`) enable F1 (debug overlay; G toggles god mode), F2 (level editor) and F5 (hot-reload data and shaders).
+
+**F2 level editor:** hold the right mouse button to look, WASD/Q/E to fly (Shift = fast). `1` tiles, `2` props, `3` markers; PgUp/PgDn change the layer. Tiles: mouse wheel picks a tile, left click paints, X erases, R rotates stairs. Props: wheel picks, left click places, R rotates, X deletes the nearest. Markers: click to select, click the floor to move it, R rotates, X deletes, N adds an enemy. Ctrl+S writes `data/levels/zone.json`.
 
 Package the archive for the current OS into `build/release/dist/`:
 

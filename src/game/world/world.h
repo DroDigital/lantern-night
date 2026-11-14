@@ -35,6 +35,8 @@ public:
     bool Build(const ZoneData& zone, AssetCache& assets, Physics& physics);
     void Unload();
     void Draw(Renderer& r, Vector3 camPos, float drawDistance) const;
+    void DrawWater(Renderer& r, Vector3 camPos, float drawDistance, float time) const;
+    void BuildWater();
 
     const ZoneData& Zone() const { return zone_; }
     // Floor height under a world point on the highest walkable layer at or below y+0.5 (or -1e9).
@@ -62,6 +64,9 @@ private:
     AssetCache* assets_ = nullptr;
     std::vector<WorldChunk> chunks_;
     std::vector<WorldProp> props_;
+    std::vector<Mesh> water_;
+    Material waterMat_{};
+    bool hasWaterMat_ = false;
     Material atlas_{};
     bool hasAtlas_ = false;
     int pieceCount_ = 0;

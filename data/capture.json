@@ -1,0 +1,12 @@
+{
+  "_doc": "Camera shots for --capture <scene>: the knight is placed at pos facing yaw (deg); look pitches the camera (radians).",
+  "shots": {
+    "area_entrance": { "zone": "zone.json", "pos": [13.0, 2.0, 40.0], "yaw": 180, "look": [0.0, 0.15], "frames": 60 },
+    "area_entrance_shrine": { "zone": "zone.json", "pos": [15.0, 2.0, 20.0], "yaw": 200, "look": [0.0, 0.1], "frames": 60 },
+    "area_ossuary": { "zone": "zone.json", "pos": [42.0, 0.0, 13.0], "yaw": 90, "look": [0.0, 0.2], "frames": 60 },
+    "area_ossuary_flooded": { "zone": "zone.json", "pos": [50.0, 0.0, 44.0], "yaw": 160, "look": [0.0, 0.2], "frames": 60 },
+    "area_warden": { "zone": "zone.json", "pos": [97.0, 2.0, 46.0], "yaw": 180, "look": [0.0, 0.18], "frames": 60 },
+    "area_twin_blades": { "zone": "zone.json", "pos": [99.0, 2.0, 56.0], "yaw": 180, "look": [0.0, 0.2], "frames": 60 },
+    "area_boss_arena": { "zone": "zone.json", "pos": [99.0, 2.0, 14.0], "yaw": 180, "look": [0.0, 0.25], "frames": 60, "unlock": true }
+  }
+}

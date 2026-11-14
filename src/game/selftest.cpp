@@ -364,3 +364,101 @@ int RunEnemySelfTest(Ctx& ctx) {
 }
 
 }  // namespace lk
+
+namespace lk {
+
+// ------------------------------------------------------------------ world (M4)
+int RunWorldSelfTest(Ctx& ctx) {
+    Harness h(ctx);
+    ctx.input.SetScripted(true);
+    int failures = 0;
+    auto check = [&](bool ok, const char* what) {
+        if (ok) LK_INFO("selftest: PASS %s", what);
+        else {
+            LK_ERROR("selftest: FAIL %s", what);
+            ++failures;
+        }
+    };
+    SaveData saved = ctx.state.progress;
+    bool god = ctx.state.godMode;
+    ctx.state.ResetProgress();
+    ctx.state.godMode = true;
+    h.s = std::make_unique<Session>(ctx);
+    if (!h.s->Load("zone.json")) return 1;
+    auto& P = h.s->GetPlayer();
+    auto interactAt = [&](Vector3 p, float yaw) {
+        P.Teleport(p, yaw);
+        h.Run(2);
+        h.Step(Harness::Press(Act::Interact));
+        h.Run(90);
+    };
+    auto find = [&](auto& list, const std::string& id) -> decltype(&list[0]) {
+        for (auto& x : list)
+            if (x.id == id) return &x;
+        return nullptr;
+    };
+    // Kill everything nearby so tests are not interrupted.
+    for (auto& e : h.s->Enemies())
+        if (e->Def().bossGroup.empty()) e->Kill();
+        else e->SetFrozenAI(true);
+
+    // 1. Lighting the hall D brazier reveals the hidden wall.
+    Brazier* b = find(h.s->Braziers(), "b_hallD");
+    Gate* secret = find(h.s->Gates(), "secret_wall");
+    check(b && secret && !secret->open, "secret wall starts closed");
+    if (b && secret) {
+        interactAt(Vector3Add(b->pos, Vector3{-1.0f, 0, 0}), 90);
+        check(b->lit && ctx.state.progress.litBraziers.count("b_hallD"), "brazier lights and is saved");
+        check(secret->open && ctx.state.progress.secretsFound.count("secret_wall"), "brazier reveals the hidden path");
+    }
+
+    // 2. Shortcut gate: does not open from the locked side, opens from the open side.
+    Gate* g = find(h.s->Gates(), "gate_shortcut_entrance");
+    if (g) {
+        interactAt(Vector3Subtract(g->pos, Vector3Scale(g->openDir, 1.2f)), 90);
+        check(!g->open, "shortcut does not open from the far side");
+        interactAt(Vector3Add(g->pos, Vector3Scale(g->openDir, 1.2f)), 270);
+        check(g->open && ctx.state.progress.openedGates.count(g->id), "shortcut opens from its side and is saved");
+    } else {
+        check(false, "shortcut gate exists");
+    }
+
+    // 3. Pickups: a Flask Shard raises the flask maximum; the greataxe is recorded.
+    int maxBefore = P.flaskMax;
+    if (Pickup* k = find(h.s->Pickups(), "shard_secret")) interactAt(Vector3Add(k->pos, Vector3{-0.8f, 0, 0}), 90);
+    check(P.flaskMax == maxBefore + 1 && ctx.state.progress.flaskShards == 1, "flask shard adds a flask");
+    if (Pickup* k = find(h.s->Pickups(), "greataxe")) interactAt(Vector3Add(k->pos, Vector3{0, 0, 0.9f}), 180);
+    check(ctx.state.progress.pickedItems.count("greataxe") > 0, "greataxe can be picked up");
+
+    // 4. The Twin Blades: when both fall, the sealed gate opens and the defeat is saved.
+    Gate* sealed = find(h.s->Gates(), "gate_sealed");
+    check(sealed && !sealed->open, "sealed gate starts closed");
+    P.Teleport(Vector3{99, 2, 56}, 180);
+    h.Run(30);
+    for (auto& e : h.s->Enemies())
+        if (e->Def().bossGroup == "twin_blades") e->Kill();
+    h.Run(5);
+    check(ctx.state.progress.defeatedBosses.count("twin_blades") > 0, "Twin Blades defeat is recorded");
+    check(sealed && sealed->open, "defeating the Twin Blades opens the sealed gate");
+
+    // 5. State survives a reload.
+    SaveData snapshot = ctx.state.progress;
+    h.s = std::make_unique<Session>(ctx);
+    h.s->Load("zone.json");
+    Gate* s2 = find(h.s->Gates(), "secret_wall");
+    Gate* g2 = find(h.s->Gates(), "gate_shortcut_entrance");
+    check(s2 && s2->open && g2 && g2->open, "opened gates stay open after reload");
+    bool twinsDead = true;
+    for (auto& e : h.s->Enemies())
+        if (e->Def().bossGroup == "twin_blades" && e->Alive()) twinsDead = false;
+    check(twinsDead, "defeated mini-boss stays dead after reload");
+
+    h.s.reset();
+    ctx.state.progress = saved;
+    ctx.state.godMode = god;
+    ctx.input.SetScripted(false);
+    LK_INFO("selftest (world): %d failures", failures);
+    return failures;
+}
+
+}  // namespace lk

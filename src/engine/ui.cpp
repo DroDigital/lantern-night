@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstring>
 
 #include "engine/assets.h"
 #include "engine/paths.h"
@@ -250,6 +251,40 @@ void Ui::Glyph(Act a, float x, float y, float size) {
     }
     Texture2D t = GlyphTexture(a);
     if (t.id) Icon(t, Rectangle{x, y, size, size});
+}
+
+std::string Ui::ActionLabel(Act a) const {
+    if (device_ == Device::KeyboardMouse) {
+        switch (a) {
+            case Act::Attack: return "LMB";
+            case Act::Heavy: return "F";
+            case Act::Roll: return "Space";
+            case Act::Block: return "RMB";
+            case Act::Interact: return "E";
+            case Act::Flask: return "R";
+            case Act::LockOn: return "Q";
+            case Act::Pause: return "Esc";
+            default: return "?";
+        }
+    }
+    PadPos p = PadPosFor(a);
+    static const char* xbox[] = {"A", "B", "X", "Y", "LB", "RB", "LT", "RT", "R3", "Menu", "?"};
+    static const char* ps[] = {"Cross", "Circle", "Square", "Triangle", "L1", "R1", "L2", "R2", "R3", "Options", "?"};
+    static const char* sw[] = {"B", "A", "Y", "X", "L", "R", "ZL", "ZR", "R3", "+", "?"};
+    const char** t = family_ == PadFamily::PlayStation ? ps : (family_ == PadFamily::Switch ? sw : xbox);
+    return t[int(p)];
+}
+
+std::string Ui::ExpandTokens(const std::string& text) const {
+    static const std::pair<const char*, Act> tokens[] = {
+        {"{Attack}", Act::Attack}, {"{Heavy}", Act::Heavy}, {"{Roll}", Act::Roll}, {"{Block}", Act::Block},
+        {"{Interact}", Act::Interact}, {"{Flask}", Act::Flask}, {"{LockOn}", Act::LockOn}, {"{Pause}", Act::Pause}};
+    std::string out = text;
+    for (auto& [tok, act] : tokens) {
+        size_t pos;
+        while ((pos = out.find(tok)) != std::string::npos) out.replace(pos, std::strlen(tok), "[" + ActionLabel(act) + "]");
+    }
+    return out;
 }
 
 void Ui::Prompt(Act a, const std::string& label, float x, float y, float size) {

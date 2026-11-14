@@ -88,8 +88,13 @@ Vector3 Session::RespawnPoint(float* yawDeg) const {
 }
 
 void Session::RespawnWorld() {
-    for (auto& e : enemies_)
-        if (!ctx_.state.progress.defeatedBosses.count(e->SpawnId()) && e->Def().brain != "boss") e->Respawn();
+    const SaveData& p = ctx_.state.progress;
+    for (auto& e : enemies_) {
+        const std::string& group = e->Def().bossGroup;
+        if (e->Def().brain == "boss") continue;                  // bosses never respawn
+        if (!group.empty() && p.defeatedBosses.count(group)) continue;
+        e->Respawn();
+    }
     tokens_.Clear();
     projectiles_.clear();
     lockId_ = -1;
@@ -141,6 +146,7 @@ void Session::UpdateInteract(const InputFrame& in, float dt) {
         }
     }
 
+    FinishWorldInteract();
     // Finish a pending interaction once the knight's animation completes.
     if (!pendingInteract_.empty() && player_.State() == PState::Move) {
         std::string id = pendingInteract_;
@@ -161,6 +167,7 @@ void Session::UpdateInteract(const InputFrame& in, float dt) {
     float range = world_cfg_.value("shrine", json::object()).value("interact_range", 1.8f);
     for (const auto& s : shrines_)
         if (Vector3Distance(s.pos, player_.Pos()) < range && std::fabs(s.pos.y - player_.Pos().y) < 1.0f) near = &s;
+    if (!near) UpdateWorldInteract();
     if (near && player_.State() == PState::Move) {
         bool lit = p.litShrines.count(near->id) > 0;
         promptText_ = lit ? "Rest" : "Light the shrine";

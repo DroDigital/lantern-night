@@ -54,6 +54,7 @@ struct DrawParams {
     bool character = false;             // apply minimum light + rim
     Vector3 lightProbe{0, 0, 0};        // position used to select lights (0 = model origin)
     bool hasProbe = false;
+    float opacity = 1.0f;               // < 1 draws translucent (water)
 };
 
 class Renderer {
@@ -72,6 +73,7 @@ public:
     const std::vector<PointLight>& Lights() const { return lights_; }
 
     void BeginScene(const Camera3D& cam);
+    void SetTime(float t) { time_ = t; }
     void DrawModel(const ModelAsset& asset, const Matrix& world, const Animator* anim, const DrawParams& p);
     void DrawStaticMesh(const Mesh& mesh, const Material& mat, const Matrix& world, Vector3 probe, const DrawParams& p);
     void DrawBlobShadow(Vector3 pos, float radius, float strength);
@@ -91,7 +93,7 @@ public:
 private:
     struct LitLocs {
         int viewPos, ambient, lightCount, lightPos, lightColor, lightRange, fogColor, fogDensity, fogHeight,
-            fogHeightFalloff, emissive, hitFlash, rimColor, rimStrength, minLight, boneMatrices, lightFalloff;
+            fogHeightFalloff, emissive, hitFlash, rimColor, rimStrength, minLight, boneMatrices, lightFalloff, opacity, time;
     };
     void BindLights(int which, Vector3 probe);
     void SetFrameUniforms(int which);
@@ -111,6 +113,7 @@ private:
     bool firstIsLantern_ = false;
     Camera3D cam_{};
     int drawCalls_ = 0;
+    float time_ = 0;
 
     int w_ = 0, h_ = 0;
     unsigned msaaFbo_ = 0, msaaColor_ = 0, msaaDepth_ = 0;

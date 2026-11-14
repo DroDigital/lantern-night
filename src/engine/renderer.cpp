@@ -169,6 +169,8 @@ bool Renderer::ReloadShaders() {
         l.minLight = GetShaderLocation(s, "minLight");
         l.boneMatrices = GetShaderLocation(s, "boneMatrices");
         l.lightFalloff = GetShaderLocation(s, "lightFalloff");
+        l.opacity = GetShaderLocation(s, "opacity");
+        l.time = GetShaderLocation(s, "time");
         s.locs[SHADER_LOC_MATRIX_MODEL] = GetShaderLocation(s, "matModel");
         s.locs[SHADER_LOC_MATRIX_NORMAL] = GetShaderLocation(s, "matNormal");
         if (i == 1) s.locs[SHADER_LOC_MATRIX_BONETRANSFORMS] = l.boneMatrices;
@@ -249,6 +251,9 @@ void Renderer::SetFrameUniforms(int which) {
     SetShaderValue(s, l.fogHeightFalloff, &settings_.fogHeightFalloff, SHADER_UNIFORM_FLOAT);
     SetShaderValue(s, l.rimColor, &settings_.rimColor, SHADER_UNIFORM_VEC3);
     SetShaderValue(s, l.lightFalloff, &settings_.lightFalloff, SHADER_UNIFORM_FLOAT);
+    SetShaderValue(s, l.time, &time_, SHADER_UNIFORM_FLOAT);
+    float one = 1.0f;
+    SetShaderValue(s, l.opacity, &one, SHADER_UNIFORM_FLOAT);
 }
 
 void Renderer::BindLights(int which, Vector3 probe) {
@@ -359,9 +364,17 @@ void Renderer::DrawStaticMesh(const Mesh& mesh, const Material& material, const 
     SetShaderValue(s, l.rimStrength, &zero, SHADER_UNIFORM_FLOAT);
     SetShaderValue(s, l.hitFlash, &p.hitFlash, SHADER_UNIFORM_FLOAT);
     SetShaderValue(s, l.emissive, &p.emissive, SHADER_UNIFORM_VEC3);
+    SetShaderValue(s, l.opacity, &p.opacity, SHADER_UNIFORM_FLOAT);
+    if (p.opacity < 1.0f) rlDisableDepthMask();
     Material mat = material;
     mat.shader = s;
     DrawMesh(mesh, mat, world);
+    if (p.opacity < 1.0f) {
+        rlDrawRenderBatchActive();
+        rlEnableDepthMask();
+        float one = 1.0f;
+        SetShaderValue(s, l.opacity, &one, SHADER_UNIFORM_FLOAT);
+    }
     ++drawCalls_;
 }
 

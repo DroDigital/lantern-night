@@ -72,6 +72,8 @@ struct ZoneData {
 
 // Parse; returns false and fills err on schema problems (missing fields, unknown legend chars).
 bool ParseZone(const nlohmann::json& j, ZoneData& out, std::string& err);
+// Set one tile, growing (or creating) the layer as needed. Used by the F2 editor.
+void SetTile(ZoneData& z, int level, int cx, int cz, char c);
 nlohmann::json ZoneToJson(const ZoneData& z);
 nlohmann::json PlacementToJson(const Placement& p);
 
