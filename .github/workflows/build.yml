@@ -1,0 +1,111 @@
+name: build
+
+on:
+  push:
+    branches: ['**']
+    tags: ['v*']
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { name: windows-x64, os: windows-latest }
+          - { name: macos-universal, os: macos-latest }
+          - { name: linux-x64, os: ubuntu-22.04 }
+    defaults:
+      run:
+        shell: bash
+    env:
+      HAS_APPLE_CERT: ${{ secrets.APPLE_CERTIFICATE != '' && secrets.APPLE_ID != '' && secrets.APPLE_TEAM_ID != '' && secrets.APPLE_APP_PASSWORD != '' }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # git describe needs tags
+
+      - name: Linux packages
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends libx11-dev libxrandr-dev libxinerama-dev libxcursor-dev \
+            libxi-dev libgl1-mesa-dev libasound2-dev xvfb libgl1-mesa-dri mesa-utils
+
+      - name: Cache fetched dependencies
+        uses: actions/cache@v4
+        with:
+          path: build/_deps/*-src
+          key: deps-${{ runner.os }}-${{ hashFiles('cmake/Dependencies.cmake') }}
+
+      - name: Configure
+        run: cmake --preset release
+
+      - name: Build
+        run: cmake --build --preset release --parallel 4
+
+      - name: Unit tests
+        run: ctest --preset release
+
+      - name: Validate content
+        run: |
+          if [ "$RUNNER_OS" = "macOS" ]; then EXE=build/release/bin/LanternKnight.app/Contents/MacOS/LanternKnight
+          elif [ "$RUNNER_OS" = "Windows" ]; then EXE=build/release/bin/LanternKnight.exe
+          else EXE=build/release/bin/LanternKnight; fi
+          "$EXE" --validate
+
+      - name: Fetch Mesa llvmpipe (Windows smoke test only)
+        if: runner.os == 'Windows'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p "$RUNNER_TEMP/mesa" && cd "$RUNNER_TEMP/mesa"
+          gh release download --repo pal1000/mesa-dist-win --pattern 'mesa3d-*-release-msvc.7z' --output mesa.7z \
+            && 7z x -y mesa.7z > /dev/null && echo "MESA_DIR=$RUNNER_TEMP/mesa" >> "$GITHUB_ENV" \
+            || echo "::warning::Could not fetch mesa-dist-win"
+
+      - name: Smoke test
+        run: tools/ci_smoke.sh build/release/bin
+
+      - name: Package
+        run: cmake --build --preset release --target package_game
+
+      - name: Developer ID sign + notarize (macOS, when secrets exist)
+        if: runner.os == 'macOS' && env.HAS_APPLE_CERT == 'true'
+        env:
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          APPLE_APP_PASSWORD: ${{ secrets.APPLE_APP_PASSWORD }}
+        run: packaging/macos/sign_notarize.sh build/release/dist
+
+      - name: Upload archive
+        uses: actions/upload-artifact@v4
+        with:
+          name: LanternKnight-${{ matrix.name }}
+          path: |
+            build/release/dist/*.zip
+            build/release/dist/*.tar.gz
+          if-no-files-found: error
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*
+          generate_release_notes: true

@@ -1,0 +1,44 @@
+{
+  "_doc": "Named SFX -> files under assets/. Each entry: files (random pick), volume, pitch_jitter, voices, max_distance.",
+  "sfx": {
+    "footstep": { "files": ["audio/kenney_rpg/footstep00.ogg", "audio/kenney_rpg/footstep01.ogg", "audio/kenney_rpg/footstep02.ogg", "audio/kenney_rpg/footstep03.ogg", "audio/kenney_rpg/footstep04.ogg"], "volume": 0.35, "voices": 4, "max_distance": 14 },
+    "armor": { "files": ["audio/kenney_rpg/beltHandle1.ogg", "audio/kenney_rpg/beltHandle2.ogg", "audio/kenney_rpg/clothBelt.ogg"], "volume": 0.3, "voices": 3 },
+    "swing": { "files": ["audio/sword/sword.1.ogg", "audio/sword/sword.2.ogg", "audio/sword/sword.3.ogg", "audio/sword/sword.4.ogg"], "volume": 0.55, "voices": 4 },
+    "swing_heavy": { "files": ["audio/sword/sword.7.ogg", "audio/sword/sword.8.ogg"], "volume": 0.7, "pitch_jitter": 0.04, "voices": 3 },
+    "hit": { "files": ["audio/impacts/bfh1_hit_01.ogg", "audio/impacts/bfh1_hit_02.ogg", "audio/impacts/bfh1_hit_03.ogg", "audio/impacts/bfh1_hit_04.ogg"], "volume": 0.8, "voices": 6 },
+    "hit_bone": { "files": ["audio/impacts/bfh1_wood_hit_01.ogg", "audio/impacts/bfh1_wood_hit_02.ogg", "audio/impacts/bfh1_wood_hit_03.ogg"], "volume": 0.8, "voices": 6 },
+    "block": { "files": ["audio/impacts/bfh1_metal_hit_01.ogg", "audio/impacts/bfh1_metal_hit_02.ogg", "audio/impacts/bfh1_metal_hit_03.ogg"], "volume": 0.8, "voices": 4 },
+    "parry": { "files": ["audio/sword/sword_clash.1.ogg", "audio/sword/sword_clash.2.ogg", "audio/sword/sword_clash.3.ogg"], "volume": 1.0, "pitch_jitter": 0.03, "voices": 3 },
+    "crit": { "files": ["audio/impacts/bfh1_breaking_01.ogg", "audio/impacts/bfh1_breaking_02.ogg"], "volume": 1.0, "voices": 2 },
+    "roll": { "files": ["audio/kenney_rpg/cloth1.ogg", "audio/kenney_rpg/cloth2.ogg", "audio/kenney_rpg/cloth3.ogg"], "volume": 0.45, "voices": 2 },
+    "player_hurt": { "files": ["audio/impacts/bfh1_metal_hit_04.ogg", "audio/impacts/bfh1_metal_hit_05.ogg"], "volume": 0.8, "voices": 3 },
+    "drink": { "files": ["audio/kenney_rpg/handleSmallLeather.ogg", "audio/kenney_rpg/metalPot1.ogg"], "volume": 0.6, "voices": 2 },
+    "embers": { "files": ["audio/kenney_rpg/handleCoins.ogg", "audio/kenney_rpg/handleCoins2.ogg"], "volume": 0.6, "voices": 3 },
+    "rest": { "files": ["audio/generated/whoosh.wav"], "volume": 0.6, "voices": 2 },
+    "ignite": { "files": ["audio/generated/whoosh.wav"], "volume": 0.8, "pitch_jitter": 0.1, "voices": 3 },
+    "gate": { "files": ["audio/kenney_rpg/doorOpen_1.ogg", "audio/kenney_rpg/doorOpen_2.ogg"], "volume": 0.9, "voices": 2, "max_distance": 30 },
+    "gate_locked": { "files": ["audio/kenney_rpg/metalLatch.ogg"], "volume": 0.8, "voices": 2 },
+    "rattle": { "files": ["audio/impacts/bfh1_wood_falling_01.ogg", "audio/impacts/bfh1_wood_falling_02.ogg", "audio/impacts/bfh1_wood_hit_02.ogg"], "volume": 0.5, "voices": 6, "max_distance": 16 },
+    "skeleton_alert": { "files": ["audio/creature/scream_01.ogg", "audio/creature/scream_02.ogg"], "volume": 0.55, "pitch_jitter": 0.12, "voices": 3, "max_distance": 22 },
+    "skeleton_die": { "files": ["audio/impacts/bfh1_rock_falling_01.ogg", "audio/impacts/bfh1_rock_falling_02.ogg", "audio/impacts/bfh1_wood_breaking_01.ogg"], "volume": 0.8, "voices": 4 },
+    "mage_cast": { "files": ["audio/creature/weird_01.ogg", "audio/creature/weird_02.ogg"], "volume": 0.6, "voices": 3, "max_distance": 22 },
+    "bolt_hit": { "files": ["audio/impacts/bfh1_glass_breaking_01.ogg", "audio/impacts/bfh1_glass_breaking_02.ogg"], "volume": 0.7, "voices": 3 },
+    "teleport": { "files": ["audio/creature/weird_03.ogg", "audio/creature/weird_04.ogg"], "volume": 0.6, "voices": 2 },
+    "glint": { "files": ["audio/kenney_rpg/drawKnife1.ogg", "audio/kenney_rpg/drawKnife2.ogg", "audio/kenney_rpg/drawKnife3.ogg"], "volume": 0.35, "voices": 4, "max_distance": 16 },
+    "boss_roar": { "files": ["audio/creature/roar_01.ogg", "audio/creature/roar_02.ogg", "audio/creature/roar_03.ogg"], "volume": 1.0, "pitch_jitter": 0.0, "voices": 2, "max_distance": 60 },
+    "slam": { "files": ["audio/impacts/bfh1_rock_breaking_01.ogg", "audio/impacts/bfh1_rock_breaking_02.ogg", "audio/impacts/bfh1_rock_breaking_03.ogg"], "volume": 1.0, "voices": 3, "max_distance": 40 },
+    "death": { "files": ["audio/impacts/bfh1_metal_falling_01.ogg"], "volume": 0.9, "voices": 1 },
+    "ui_move": { "files": ["audio/kenney_rpg/metalClick.ogg"], "volume": 0.4, "pitch_jitter": 0.02, "voices": 3 },
+    "ui_confirm": { "files": ["audio/kenney_rpg/bookPlace1.ogg"], "volume": 0.5, "voices": 2 },
+    "ui_back": { "files": ["audio/kenney_rpg/bookClose.ogg"], "volume": 0.5, "voices": 2 },
+    "pickup": { "files": ["audio/kenney_rpg/handleCoins2.ogg"], "volume": 0.7, "voices": 2 },
+    "level_up": { "files": ["audio/kenney_rpg/metalPot2.ogg"], "volume": 0.6, "voices": 2 }
+  },
+  "loops": {
+    "lantern_crackle": "audio/generated/lantern_crackle.wav"
+  },
+  "music": {
+    "ambient": "audio/music/ambient.ogg",
+    "boss": "audio/music/boss.ogg"
+  }
+}

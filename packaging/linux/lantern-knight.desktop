@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Lantern Knight
+Comment=A small knight, a dark crypt, and a lantern that is your life
+Exec=LanternKnight
+Icon=lantern-knight
+Terminal=false
+Categories=Game;ActionGame;

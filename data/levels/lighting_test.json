@@ -1,0 +1,41 @@
+{
+  "version": 1,
+  "name": "lighting_test",
+  "cell_size": 2.0,
+  "model_scale": 0.5,
+  "layer_height": 2.0,
+  "music": "ambient",
+  "legend": {
+    "#": { "kind": "wall", "variants": ["wall", "wall", "wall_cracked", "wall_arched"] },
+    ".": { "kind": "floor", "piece": "floor_tile_large" },
+    ",": { "kind": "floor", "piece": "floor_tile_large_rocks" },
+    ";": { "kind": "floor", "piece": "floor_dirt_large" },
+    "^": { "kind": "stairs", "piece": "stairs", "rot": 0 }
+  },
+  "layers": [
+    { "name": "room", "level": 0, "origin": [0, 0], "rows": [
+      "##########",
+      "#........#",
+      "#..,.....#",
+      "#........#",
+      "#....;...#",
+      "#..;;....#",
+      "#........#",
+      "#.....,..#",
+      "#........#",
+      "##########"
+    ]}
+  ],
+  "player_spawn": { "pos": [5.0, 0.0, 15.0], "rot": 180 },
+  "props": [
+    { "model": "kaykit_dungeon/pillar.gltf.glb", "pos": [7.0, 0.0, 7.0], "collide": true },
+    { "model": "kaykit_dungeon/pillar.gltf.glb", "pos": [13.0, 0.0, 7.0], "collide": true },
+    { "model": "kaykit_dungeon/barrel_large.gltf.glb", "pos": [16.8, 0.0, 3.2], "rot": 20, "collide": true },
+    { "model": "kaykit_dungeon/crates_stacked.gltf.glb", "pos": [3.0, 0.0, 3.0], "rot": 10, "collide": true },
+    { "model": "kaykit_dungeon/chest.glb", "pos": [10.0, 0.0, 2.6], "rot": 0, "collide": true },
+    { "model": "quaternius_props/CandleStick_Stand.gltf", "pos": [15.5, 0.0, 15.5], "scale": 1.6 }
+  ],
+  "lights": [
+    { "id": "cold_window", "pos": [10.0, 3.0, 1.5], "color": [0.25, 0.35, 0.6], "intensity": 0.6, "range": 6.0 }
+  ]
+}
