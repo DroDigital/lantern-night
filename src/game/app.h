@@ -11,6 +11,7 @@
 #include "engine/input.h"
 #include "engine/physics.h"
 #include "engine/renderer.h"
+#include "engine/ui.h"
 #include "game/context.h"
 
 namespace lk {
@@ -31,6 +32,8 @@ struct AppOptions {
     bool windowedOverride = false;
     std::string zone = "zone.json";
     std::string userDir;          // override user data folder
+    std::string animReport;       // --anim-report <out.md>
+    bool selfTest = false;
 };
 
 
@@ -46,8 +49,10 @@ private:
     int RunInteractive();
     int RunCapture();
     int RunSmoke();
+    int RunAnimReport();
     bool SaveScreenshot(const std::string& path);
     void RenderFrame(float alpha);
+    InputFrame CaptureScript(const std::string& scene, int frame, int total);
 
     GameState& state_;
     SaveSystem& save_;
@@ -59,10 +64,10 @@ private:
     Renderer renderer_;
     Physics physics_;
     Input input_;
+    Ui ui_;
     std::unique_ptr<Ctx> ctx_;
     std::unique_ptr<Session> session_;
     bool engineReady_ = false;
-    double accumulator_ = 0.0;
 };
 
 }  // namespace lk

@@ -30,3 +30,13 @@ Ambiguities resolved during development, simplest option first.
 
 ## Physics / character
 - **CharacterVirtual** uses grounded velocity = ground velocity (no gravity while grounded) so characters neither pin into creases nor creep down slopes.
+
+## Combat (M1)
+- **Hit frames are measured.** `LanternKnight --anim-report docs/anim_timing.md` samples the weapon tip (handslot.r) through every attack clip; `hit`/`hit_end` are the span where tip speed stays above 45% of peak (minus 0.02 s / plus 0.07 s follow-through). Cancel windows open 0.04 s after `hit_end`. Enemy wind-up holds start 0.14 s before the fast arc.
+- **Roll is on button release** (tap < 0.28 s); holding the same button sprints. This is the standard soulslike mapping.
+- **Parry spends its 10 stamina when block is pressed**; the window is 0.15 s with a 0.25 s re-press cooldown, so mashing does not keep it open.
+- **Riposte** is simply attacking a staggered enemy (from a parry or a broken posture): the hit is a 3x critical, and if the enemy is in front and close the knight uses the riposte (stab) animation.
+- **Greataxe has no shield:** the block button only parries (a short deflect animation).
+- **Enemy shields** (warrior) block light attacks from the front within their arc; heavies go through and deal big posture damage.
+- **Lock-on** adds an over-the-shoulder camera offset so the target is not hidden behind the knight.
+- **Hitstop** sets the simulation time scale to `hitstop_time_scale` (0) for the event's duration in real time; rendering keeps running at full frame rate.

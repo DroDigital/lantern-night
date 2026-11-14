@@ -7,8 +7,7 @@
       "hidden": true,
       "binaryDir": "${sourceDir}/build/${presetName}",
       "cacheVariables": {
-        "FETCHCONTENT_QUIET": "ON",
-        "FETCHCONTENT_BASE_DIR": "${sourceDir}/build/_deps"
+        "FETCHCONTENT_QUIET": "ON"
       }
     },
     {

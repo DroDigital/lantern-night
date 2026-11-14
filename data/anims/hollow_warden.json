@@ -1,0 +1,131 @@
+{
+  "_doc": "The Hollow Warden: Skeleton Warrior scaled x2.5.",
+  "model": "kaykit_skeletons/Skeleton_Warrior.glb",
+  "actions": {
+    "idle": {
+      "clip": "Idle_Combat",
+      "loop": true,
+      "speed": 0.8
+    },
+    "walk": {
+      "clip": "Walking_D_Skeletons",
+      "loop": true,
+      "speed": 0.8,
+      "events": [
+        {
+          "t": 0.4,
+          "e": "stomp"
+        },
+        {
+          "t": 1.2,
+          "e": "stomp"
+        }
+      ]
+    },
+    "run": {
+      "clip": "Running_C",
+      "loop": true,
+      "events": [
+        {
+          "t": 0.2,
+          "e": "rattle"
+        }
+      ]
+    },
+    "strafe_left": {
+      "clip": "Running_Strafe_Left",
+      "loop": true,
+      "speed": 0.6
+    },
+    "strafe_right": {
+      "clip": "Running_Strafe_Right",
+      "loop": true,
+      "speed": 0.6
+    },
+    "walk_back": {
+      "clip": "Walking_Backwards",
+      "loop": true
+    },
+    "alert": {
+      "clip": "Taunt",
+      "speed": 1.4
+    },
+    "hit": {
+      "clip": "Hit_A",
+      "speed": 1.4
+    },
+    "block_hit": {
+      "clip": "Block_Hit",
+      "speed": 1.6
+    },
+    "block": {
+      "clip": "Blocking",
+      "loop": true
+    },
+    "stagger": {
+      "clip": "Hit_B",
+      "speed": 0.5
+    },
+    "death": {
+      "clip": "Death_C_Skeletons",
+      "speed": 0.7
+    },
+    "spawn": {
+      "clip": "Spawn_Ground_Skeletons",
+      "speed": 1.5
+    },
+    "dodge_back": {
+      "clip": "Dodge_Backward",
+      "speed": 0.8
+    },
+    "sweep_1": {
+      "clip": "1H_Melee_Attack_Slice_Horizontal",
+      "speed": 0.75,
+      "windup": 0.091,
+      "hit": 0.211,
+      "hit_end": 0.37
+    },
+    "sweep_2": {
+      "clip": "1H_Melee_Attack_Slice_Diagonal",
+      "speed": 0.8,
+      "windup": 0.227,
+      "hit": 0.347,
+      "hit_end": 0.503
+    },
+    "slam": {
+      "clip": "1H_Melee_Attack_Jump_Chop",
+      "speed": 0.75,
+      "windup": 0.56,
+      "hit": 0.68,
+      "hit_end": 0.839
+    },
+    "slam_delayed": {
+      "clip": "1H_Melee_Attack_Jump_Chop",
+      "speed": 0.7,
+      "windup": 0.56,
+      "hit": 0.68,
+      "hit_end": 0.84
+    },
+    "charge": {
+      "clip": "Block",
+      "loop": false,
+      "speed": 1.0,
+      "windup": 0.2,
+      "hit": 0.3,
+      "hit_end": 1.0
+    },
+    "charge_run": {
+      "clip": "Running_C",
+      "loop": true,
+      "speed": 1.2
+    },
+    "roar": {
+      "clip": "Taunt_Longer",
+      "speed": 1.0
+    },
+    "summon": {
+      "clip": "Spellcast_Summon",
+      "speed": 1.6
+    }
+  }
+}

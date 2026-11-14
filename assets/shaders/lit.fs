@@ -60,6 +60,6 @@ void main() {
     float fogH = clamp(exp(-(fragPosition.y - fogHeight) * fogHeightFalloff), 0.0, 1.0);
     float fog = clamp(fogD * (0.55 + 0.45 * fogH), 0.0, 1.0);
     col = mix(col, fogColor, fog);
-    col = mix(col, vec3(3.0), clamp(hitFlash, 0.0, 1.0));
+    col = mix(col, vec3(1.4), clamp(hitFlash, 0.0, 1.0) * 0.55);
     finalColor = vec4(col, 1.0);
 }

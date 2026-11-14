@@ -12,6 +12,8 @@
 #include "game/save_system.h"
 #include "game/session.h"
 #include "game/validate.h"
+#include "game/anim_report.h"
+#include "game/selftest.h"
 #include "rlgl.h"
 
 namespace fs = std::filesystem;
@@ -45,7 +47,8 @@ bool App::InitEngine(int w, int h, bool hidden) {
     physics_.Init();
     if (!opt_.smokeTest && opt_.captureScene.empty()) audio_.Init(data_.Get("audio.json"));
     else if (opt_.smokeTest) audio_.Init(data_.Get("audio.json"));  // still load every sound
-    ctx_ = std::make_unique<Ctx>(Ctx{data_, assets_, renderer_, physics_, input_, audio_, save_, state_});
+    ui_.Init(assets_);
+    ctx_ = std::make_unique<Ctx>(Ctx{data_, assets_, renderer_, physics_, input_, audio_, save_, state_, ui_});
     engineReady_ = true;
     return true;
 }
@@ -53,6 +56,7 @@ bool App::InitEngine(int w, int h, bool hidden) {
 void App::ShutdownEngine() {
     if (!engineReady_) return;
     session_.reset();
+    ui_.Shutdown();
     physics_.Shutdown();
     assets_.UnloadAll();
     renderer_.Shutdown();
@@ -66,6 +70,11 @@ int App::Run(const AppOptions& opt) {
     if (!opt.userDir.empty()) paths::SetUserDir(opt.userDir);
     if (!opt.captureScene.empty()) return RunCapture();
     if (opt.smokeTest) return RunSmoke();
+    if (!opt.animReport.empty()) return RunAnimReport();
+    if (opt.selfTest) {
+        if (!InitEngine(1280, 720, false)) return 3;
+        return RunCombatSelfTest(*ctx_) == 0 ? 0 : 1;
+    }
     return RunInteractive();
 }
 
@@ -82,7 +91,9 @@ bool App::SaveScreenshot(const std::string& path) {
 void App::RenderFrame(float alpha) {
     BeginDrawing();
     ClearBackground(BLACK);
+    ui_.Begin(GetScreenWidth(), GetScreenHeight(), input_.Peek(), input_.LastDevice(), input_.Family());
     if (session_) session_->Render(alpha, GetScreenWidth(), GetScreenHeight());
+    ui_.End();
     EndDrawing();
 }
 
@@ -90,7 +101,6 @@ int App::RunInteractive() {
     if (!InitEngine(opt_.width, opt_.height, false)) return 3;
     session_ = std::make_unique<Session>(*ctx_);
     if (!session_->Load(opt_.zone)) return 1;
-    const double step = 1.0 / 60.0;
     while (!WindowShouldClose()) {
         float frameDt = std::min(GetFrameTime(), 0.25f);
 #if defined(LK_DEBUG_TOOLS)
@@ -104,15 +114,37 @@ int App::RunInteractive() {
 #endif
         if (IsWindowResized()) renderer_.Resize(GetRenderWidth(), GetRenderHeight());
         input_.Poll(frameDt, true);
-        accumulator_ += frameDt;
-        while (accumulator_ >= step) {
-            session_->Step(input_.ConsumeStep(), float(step));
-            accumulator_ -= step;
-        }
+        session_->Advance(frameDt);
         audio_.Update(frameDt);
-        RenderFrame(float(accumulator_ / step));
+        RenderFrame(session_->Alpha());
     }
     return 0;
+}
+
+InputFrame App::CaptureScript(const std::string& scene, int f, int total) {
+    InputFrame in;
+    if (scene.rfind("lighting", 0) == 0 || scene == "zone_overview") {
+        if (scene == "zone_overview" && f == 0) in.look = {0.0f, 0.25f};
+        // Walk toward the far wall, then idle for the last part so the pose settles.
+        if (f < total * 2 / 3) in.move = {0.0f, 0.5f};
+    } else if (scene == "swing") {
+        if (f == 2) in.Press(Act::Attack);
+    } else if (scene == "parry") {
+        if (f == 65) in.Press(Act::Block);
+    } else if (scene == "combat") {
+        // Approach the training skeleton, lock on and swing.
+        if (f < 78) in.move = {0.0f, 1.0f};
+        if (f == 30) in.Press(Act::LockOn);
+        if (f == 82 || f == 112 || f == 140) in.Press(Act::Attack);
+        if (f > total - 12) in.move = {0.0f, 0.0f};
+    } else if (scene == "block") {
+        if (f < 40) in.move = {0.0f, 1.0f};
+        if (f == 42) in.Press(Act::LockOn);
+        if (f > 45) in.Set(Act::Block, true);
+    } else if (scene == "hud") {
+        if (f < 20) in.move = {0.2f, 0.6f};
+    }
+    return in;
 }
 
 int App::RunCapture() {
@@ -120,13 +152,18 @@ int App::RunCapture() {
     std::error_code ec;
     fs::create_directories(opt_.captureOut, ec);
     std::vector<std::string> scenes;
-    if (opt_.captureScene == "all") scenes = {"lighting_full", "lighting_half", "lighting_low", "zone_overview"};
+    if (opt_.captureScene == "all")
+        scenes = {"lighting_full", "lighting_half", "lighting_low", "zone_overview", "combat", "swing", "parry", "hud"};
     else scenes = {opt_.captureScene};
     input_.SetScripted(true);
     int failures = 0;
     for (const auto& scene : scenes) {
+        session_.reset();
         session_ = std::make_unique<Session>(*ctx_);
-        std::string zone = scene.rfind("lighting", 0) == 0 ? "lighting_test.json" : opt_.zone;
+        std::string zone = opt_.zone;
+        if (scene.rfind("lighting", 0) == 0) zone = "lighting_test.json";
+        bool training = scene == "combat" || scene == "block" || scene == "hud" || scene == "swing" || scene == "parry";
+        if (training) zone = "training.json";
         if (!session_->Load(zone)) {
             ++failures;
             continue;
@@ -134,21 +171,44 @@ int App::RunCapture() {
         if (scene == "lighting_full") session_->SetFlameFraction(1.0f);
         else if (scene == "lighting_half") session_->SetFlameFraction(0.5f);
         else if (scene == "lighting_low") session_->SetFlameFraction(0.15f);
-        for (int f = 0; f < opt_.captureFrames; ++f) {
-            InputFrame in;
-            if (scene == "zone_overview" && f == 0) in.look = {0.0f, 0.25f};
-            // Walk toward the far wall, then idle for the last part so the pose settles.
-            if (f < opt_.captureFrames * 2 / 3) in.move = {0.0f, 0.5f};
-            input_.PushScripted(in);
-            session_->Step(input_.ConsumeStep(), 1.0f / 60.0f);
+        else if (scene == "hud") session_->SetFlameFraction(0.62f);
+        int frames = opt_.captureFrames;
+        if ((scene == "swing" || scene == "parry") && !session_->Enemies().empty()) {
+            Enemy* d = session_->Enemies()[0].get();
+            Vector3 ep = d->Pos();
+            // Stand in front of the dummy at a slight angle so the camera sees both.
+            session_->GetPlayer().Teleport(Vector3{ep.x + 0.35f, ep.y, ep.z + 0.95f}, 200.0f);
+            session_->ForceLock(d->Id());
+            session_->Camera().Reset(session_->GetPlayer().Pos(), 200.0f * DEG2RAD + PI);
+            if (scene == "parry") d->TriggerAttackSoon();
+            frames = scene == "swing" ? 19 : 73;
+        }
+        if (scene == "combat") frames = std::max(frames, 158);
+        if (scene == "block") frames = std::max(frames, 262);
+        for (int f = 0; f < frames; ++f) {
+            input_.PushScripted(CaptureScript(scene, f, frames));
+            session_->Advance(1.0f / 60.0f);
+            if (opt_.verbose && scene == "combat" && f >= 80 && f % 3 == 0) {
+                Player& pl = session_->GetPlayer();
+                Vector3 b, t;
+                pl.WeaponPoints(b, t);
+                LK_INFO("dbg f%d state %s anim t active %d tip (%.2f %.2f %.2f) base (%.2f %.2f %.2f)", f, PStateName(pl.State()),
+                        int(pl.AttackActive()), t.x, t.y, t.z, b.x, b.y, b.z);
+            }
             if (opt_.verbose && f % 20 == 0) {
                 Vector3 p = session_->PlayerPos();
                 LK_INFO("capture %s frame %d player (%.2f, %.2f, %.2f)", scene.c_str(), f, p.x, p.y, p.z);
             }
             BeginDrawing();
             ClearBackground(BLACK);
-            session_->Render(1.0f, GetScreenWidth(), GetScreenHeight());
-            if (f == opt_.captureFrames - 1)
+            ui_.Begin(GetScreenWidth(), GetScreenHeight(), input_.Peek(), input_.LastDevice(), input_.Family());
+            session_->Render(session_->Alpha(), GetScreenWidth(), GetScreenHeight());
+            if (f == frames - 1 && opt_.verbose)
+                for (auto& e : session_->Enemies())
+                    LK_INFO("capture %s: enemy %s hp %.1f posture %.1f state %s | player flame %.1f stamina %.1f state %s", scene.c_str(),
+                            e->Def().name.c_str(), e->Hp(), e->GetPosture().value, EStateName(e->State()),
+                            session_->GetPlayer().flame, session_->GetPlayer().stamina.value, PStateName(session_->GetPlayer().State()));
+            if (f == frames - 1)
                 if (!SaveScreenshot((fs::path(opt_.captureOut) / (scene + ".png")).string())) ++failures;
             EndDrawing();
         }
@@ -156,16 +216,25 @@ int App::RunCapture() {
     return failures == 0 && log::ErrorCount() == 0 ? 0 : 1;
 }
 
+int App::RunAnimReport() {
+    if (!InitEngine(640, 360, false)) return 3;
+    return WriteAnimReport(*ctx_, opt_.animReport);
+}
+
 int App::RunSmoke() {
     if (!InitEngine(1280, 720, false)) return 3;
+    if (RunCombatSelfTest(*ctx_) != 0) {
+        LK_ERROR("smoke: combat self-test failed");
+        return 1;
+    }
     session_ = std::make_unique<Session>(*ctx_);
     if (!session_->Load(opt_.zone)) return 1;
     input_.SetScripted(true);
-    for (int i = 0; i < 3600; ++i) {
+    for (int i = 0; session_->StepCount() < 3600 && i < 20000; ++i) {
         InputFrame in;
         in.move = {0.3f * std::sin(float(i) * 0.01f), 0.8f};
         input_.PushScripted(in);
-        session_->Step(input_.ConsumeStep(), 1.0f / 60.0f);
+        session_->Advance(1.0f / 60.0f);
         Vector3 p = session_->PlayerPos();
         if (std::isnan(p.x) || std::isnan(p.y) || std::isnan(p.z)) {
             LK_ERROR("smoke: NaN player position at step %d", i);

@@ -1,0 +1,39 @@
+{
+  "version": 1,
+  "name": "training",
+  "cell_size": 2.0,
+  "model_scale": 0.5,
+  "layer_height": 2.0,
+  "music": "ambient",
+  "legend": {
+    "#": { "kind": "wall", "variants": ["wall", "wall", "wall_cracked", "wall_arched"] },
+    ".": { "kind": "floor", "piece": "floor_tile_large" },
+    ",": { "kind": "floor", "piece": "floor_tile_large_rocks" }
+  },
+  "layers": [
+    { "name": "yard", "level": 0, "origin": [0, 0], "rows": [
+      "##########",
+      "#........#",
+      "#........#",
+      "#...,....#",
+      "#........#",
+      "#........#",
+      "#.....,..#",
+      "#........#",
+      "##########"
+    ]}
+  ],
+  "player_spawn": { "pos": [10.0, 0.0, 13.0], "rot": 180 },
+  "enemies": [
+    { "id": "dummy", "kind": "training", "pos": [10.0, 0.0, 6.0], "rot": 0 }
+  ],
+  "props": [
+    { "model": "kaykit_dungeon/barrel_large.gltf.glb", "pos": [3.0, 0.0, 3.0], "rot": 20, "collide": true },
+    { "model": "kaykit_dungeon/crates_stacked.gltf.glb", "pos": [16.5, 0.0, 3.2], "rot": -10, "collide": true },
+    { "model": "quaternius_props/WeaponStand.gltf", "pos": [3.2, 0.0, 14.5], "rot": 90, "scale": 1.4 }
+  ],
+  "lights": [
+    { "id": "t1", "pos": [2.6, 2.4, 9.0], "preset": "torch_light" },
+    { "id": "t2", "pos": [17.4, 2.4, 9.0], "preset": "torch_light" }
+  ]
+}

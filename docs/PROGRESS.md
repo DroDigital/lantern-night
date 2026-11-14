@@ -13,5 +13,18 @@
 - The smoke test is a movement soak at this point; the full scripted path (attack, kill, rest, save/reload) arrives with M1–M2.
 - `zone.json` is a stairs test room until M4.
 
+## M1 Player: done
+- Knight controller (`src/game/player/`): walk/run/sprint, roll with i-frames (0.08 to 0.33 s), 3-hit light combo with cancel windows, charged heavy (up to 1 s, +60%), block (x0.5 damage, stamina cost, frontal arc), parry (block pressed within 0.15 s before the hit lands; staggers the attacker), riposte (3x on a staggered enemy), hit and guard-break reactions, exhaustion at 0 stamina (walk only), 0.15 s input buffer, attacks commit outside their cancel windows.
+- Camera: orbit, smooth follow, Jolt sphere-cast collision, lock-on (toggle, flick or wheel to switch, released when out of range or hidden for 2 s) with an over-the-shoulder offset.
+- Combat queries: weapon capsules swept between steps vs hurtbox capsules; per-swing hit lists.
+- Hit frames measured, not guessed: `--anim-report` samples every attack's weapon-tip speed and writes `docs/anim_timing.md`; the anim maps use those windows.
+- Training skeleton (`data/enemies/training.json`) swings on a timer with a held, glinting wind-up.
+- Feel: hitstop scales the sim clock (70 ms hits, 120 ms parries/crits), camera shake, white hit flash, blue-white parry flash, sparks on blocks, ribbon weapon trails, embers drifting from the lantern.
+- HUD: flame bar with lantern icon, stamina bar, flasks, embers, enemy health/posture bars, lock-on reticle; Kenney prompts per device (PlayStation face buttons are drawn placeholders).
+- `--selftest` (also run first in `--smoke-test`): 20 deterministic combat checks covering hits, combo, block, parry (and an early tap that must not parry), roll i-frames, riposte, heavy charge, exhaustion, commit and the input buffer. All pass.
+
+### Known issues
+- Gamepad feel was tuned from data and the self-test only; no physical pad was attached in the build environment.
+
 ## Next
-- M1 Player: movement, camera, lock-on, stamina, roll, combos, block, parry vs a training skeleton.
+- M2 Lantern loop: flame as health, flasks, shrine, death and ember pile, leveling, save and load.

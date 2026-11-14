@@ -21,6 +21,8 @@ void CameraTuning::Load(const json& j) {
     fov = j.value("fov_deg", fov);
     lockonPitch = j.value("lockon_pitch_deg", lockonPitch);
     lockonTurn = j.value("lockon_turn_sharpness", lockonTurn);
+    lockonShoulder = j.value("lockon_shoulder", lockonShoulder);
+    lockonDistance = j.value("lockon_distance", lockonDistance);
     shakeDecay = j.value("shake_decay", shakeDecay);
     shakeFrequency = j.value("shake_frequency", shakeFrequency);
 }
@@ -67,11 +69,18 @@ void CameraRig::Update(float dt, Vector3 followPos, Vector2 look, const Vector3*
     pitch_ = std::clamp(pitch_, tuning.pitchMin * DEG2RAD, tuning.pitchMax * DEG2RAD);
 
     Vector3 back{std::sin(yaw_) * std::cos(pitch_), std::sin(pitch_), std::cos(yaw_) * std::cos(pitch_)};
-    float want = tuning.distance;
+    // Locked on: slide over the knight's shoulder so the target is not hidden behind them.
+    float wantShoulder = lockTarget ? tuning.lockonShoulder : 0.0f;
+    shoulder_ += (wantShoulder - shoulder_) * (dt > 0 ? Damp(6.0f, dt) : 1.0f);
+    Vector3 side = Vector3Scale(Right(), shoulder_);
+    Vector3 basePivot = pivot_;
+    pivot_ = Vector3Add(pivot_, side);
+    float dist = lockTarget ? tuning.lockonDistance : tuning.distance;
+    float want = dist;
     if (physics) {
-        Vector3 far = Vector3Add(pivot_, Vector3Scale(back, tuning.distance));
-        RayHit h = physics->SphereCast(pivot_, far, tuning.collisionRadius);
-        if (h.hit) want = std::max(tuning.minDistance, tuning.distance * h.fraction - 0.05f);
+        Vector3 far = Vector3Add(pivot_, Vector3Scale(back, dist));
+        RayHit h = physics->SphereCast(basePivot, far, tuning.collisionRadius);
+        if (h.hit) want = std::max(tuning.minDistance, dist * h.fraction - 0.05f);
     }
     if (dt <= 0) curDist_ = want;
     else if (want < curDist_) curDist_ += (want - curDist_) * Damp(tuning.collisionIn, dt);
@@ -90,6 +99,7 @@ void CameraRig::Update(float dt, Vector3 followPos, Vector2 look, const Vector3*
         pos = Vector3Add(pos, off);
         target = Vector3Add(target, Vector3Scale(off, 0.5f));
     }
+    pivot_ = basePivot;
     cam_.position = pos;
     cam_.target = target;
     cam_.fovy = tuning.fov;

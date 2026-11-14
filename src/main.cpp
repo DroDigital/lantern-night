@@ -54,6 +54,8 @@ int main(int argc, char** argv) {
         else if (a == "--frames") opt.captureFrames = std::atoi(next().c_str());
         else if (a == "--out") opt.captureOut = next();
         else if (a == "--zone") opt.zone = next();
+        else if (a == "--anim-report") opt.animReport = next();
+        else if (a == "--selftest") opt.selfTest = true;
         else if (a == "--user-dir") opt.userDir = next();
         else if (a == "--size") {
             std::string s = next();

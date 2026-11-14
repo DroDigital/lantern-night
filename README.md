@@ -51,7 +51,9 @@ cmake --build --preset release --target package_game
 | Command | What it does |
 |---|---|
 | `LanternKnight --validate` | Parses every glTF and data file (no window). |
-| `LanternKnight --smoke-test` | Scripted 3,600-step run; non-zero exit on any error. |
+| `LanternKnight --smoke-test` | Combat self-test, then a scripted 3,600-step run; non-zero exit on any error. |
+| `LanternKnight --selftest` | Deterministic combat checks only (hits, combo, block, parry, roll, riposte, buffer). |
+| `LanternKnight --anim-report docs/anim_timing.md` | Measures attack swing windows from the clips. |
 | `LanternKnight --capture all --frames 90 --out shots` | Renders the capture scenes and saves PNGs. |
 | `asset_report assets docs/asset_report.md` | Regenerates the asset report. |
 

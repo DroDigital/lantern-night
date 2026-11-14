@@ -1,0 +1,15 @@
+{
+  "_doc": "Game feel: hitstop (seconds of real time, simulation clock scaled), camera shake, flashes and particle bursts.",
+  "hitstop_time_scale": 0.0,
+  "hitstop": { "hit": 0.07, "crit": 0.12, "parry": 0.12, "block": 0.05, "hurt": 0.07, "posture_break": 0.1 },
+  "shake": { "hit": 0.22, "crit": 0.5, "parry": 0.35, "block": 0.2, "hurt": 0.45, "slam": 0.8 },
+  "parry_flash": { "color": [190, 220, 255], "strength": 0.4, "decay": 4.5 },
+  "hurt_flash": { "color": [255, 90, 40], "strength": 0.18, "decay": 5.0 },
+  "enemy_bar_time": 4.0,
+  "lantern_embers_per_sec": 5.0,
+  "particle_cap": 3000,
+  "sparks": { "count": 18, "speed": [2.0, 5.5], "life": [0.15, 0.4], "size": [0.025, 0.05], "color": [6.0, 3.5, 1.4] },
+  "hit_burst": { "count": 10, "speed": [1.0, 3.0], "life": [0.2, 0.45], "size": [0.03, 0.06], "color": [4.0, 3.6, 3.2] },
+  "parry_burst": { "count": 32, "speed": [2.5, 6.5], "life": [0.2, 0.5], "size": [0.03, 0.07], "color": [3.0, 4.5, 7.0] },
+  "death_embers": { "count": 26, "speed": [0.6, 2.2], "life": [0.8, 1.6], "size": [0.03, 0.06], "color": [5.0, 2.0, 0.5] }
+}

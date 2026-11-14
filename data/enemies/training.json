@@ -1,0 +1,76 @@
+{
+  "scale": 1.0,
+  "radius": 0.32,
+  "height": 1.15,
+  "turn_speed_deg": 300,
+  "walk_speed": 1.1,
+  "run_speed": 2.4,
+  "aggro_range": 6.0,
+  "lose_range": 18.0,
+  "attack_cooldown": [
+    1.2,
+    2.2
+  ],
+  "hit_flash_time": 0.12,
+  "posture_decay": 10.0,
+  "posture_decay_delay": 1.6,
+  "stagger_time": 1.5,
+  "flinch": true,
+  "glint_color": [
+    4.0,
+    3.2,
+    2.2
+  ],
+  "eyes": {
+    "emissive_meshes": [
+      "Eyes"
+    ],
+    "eye_color": [
+      3.2,
+      0.9,
+      0.25
+    ]
+  },
+  "name": "Training Skeleton",
+  "model": "kaykit_skeletons/Skeleton_Warrior.glb",
+  "anims": "anims/training.json",
+  "brain": "training",
+  "hp": 400,
+  "posture": 100,
+  "embers": 0,
+  "weapon": {
+    "model": "kaykit_skeletons/items/Skeleton_Blade.gltf",
+    "bone": "handslot.r",
+    "base": [
+      0,
+      0.1,
+      0
+    ],
+    "tip": [
+      0,
+      1.15,
+      0
+    ],
+    "radius": 0.16
+  },
+  "offhand": {
+    "model": "kaykit_skeletons/items/Skeleton_Shield_Large_A.gltf",
+    "bone": "handslot.l"
+  },
+  "swing_interval": 3.0,
+  "moves": [
+    {
+      "name": "chop",
+      "anim": "attack_1",
+      "range": [
+        0,
+        2.2
+      ],
+      "damage": 14,
+      "posture": 0,
+      "hold": 0.6,
+      "lunge": 0.4,
+      "weight": 1
+    }
+  ]
+}

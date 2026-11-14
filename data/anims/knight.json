@@ -2,28 +2,149 @@
   "_doc": "Action -> KayKit clip for the player knight (assets/kaykit_adventures/Knight.glb). Times in seconds of clip time (before speed). See docs/asset_report.md for clip names and durations.",
   "model": "kaykit_adventures/Knight.glb",
   "actions": {
-    "idle":           { "clip": "Idle", "loop": true },
-    "walk":           { "clip": "Walking_A", "loop": true, "events": [{"t": 0.25, "e": "footstep"}, {"t": 0.78, "e": "footstep"}] },
-    "run":            { "clip": "Running_A", "loop": true, "events": [{"t": 0.18, "e": "footstep"}, {"t": 0.58, "e": "footstep"}] },
-    "sprint":         { "clip": "Running_B", "loop": true, "speed": 1.15, "events": [{"t": 0.2, "e": "footstep"}, {"t": 0.73, "e": "footstep"}] },
-    "roll":           { "clip": "Dodge_Forward", "speed": 0.8, "note": "0.4 s clip slowed to the 0.5 s roll" },
-    "attack_light_1": { "clip": "1H_Melee_Attack_Slice_Diagonal", "speed": 1.45, "hit": 0.42, "hit_end": 0.58, "cancel_open": 0.62, "cancel_close": 0.95 },
-    "attack_light_2": { "clip": "1H_Melee_Attack_Slice_Horizontal", "speed": 1.45, "hit": 0.40, "hit_end": 0.58, "cancel_open": 0.62, "cancel_close": 1.0 },
-    "attack_light_3": { "clip": "1H_Melee_Attack_Stab", "speed": 1.6, "hit": 0.62, "hit_end": 0.80, "cancel_open": 0.95, "cancel_close": 1.5 },
-    "attack_heavy":   { "clip": "1H_Melee_Attack_Chop", "speed": 1.1, "hit": 0.48, "hit_end": 0.66, "cancel_open": 0.78, "cancel_close": 1.05, "charge_hold": 0.30, "note": "charge holds the clip at charge_hold while the button is held" },
-    "block":          { "clip": "Blocking", "loop": true },
-    "block_hit":      { "clip": "Block_Hit", "speed": 1.6 },
-    "parry":          { "clip": "Block_Attack", "speed": 1.5 },
-    "riposte":        { "clip": "1H_Melee_Attack_Stab", "speed": 1.5, "hit": 0.6, "hit_end": 0.8, "cancel_open": 1.0, "cancel_close": 1.5 },
-    "hit":            { "clip": "Hit_A", "speed": 1.3 },
-    "stagger":        { "clip": "Hit_B", "speed": 1.0 },
-    "drink":          { "clip": "Use_Item", "speed": 1.33, "hit": 0.75, "note": "hit = moment the flame is restored (0.75/1.33 = 0.56 s); total 1.2 s" },
-    "interact":       { "clip": "Interact", "speed": 1.0 },
-    "rest":           { "clip": "Sit_Floor_Down", "speed": 1.0 },
-    "rest_idle":      { "clip": "Sit_Floor_Idle", "loop": true },
-    "rest_up":        { "clip": "Sit_Floor_StandUp", "speed": 1.2 },
-    "death":          { "clip": "Death_A", "speed": 0.8 },
-    "cheer":          { "clip": "Cheer" }
+    "idle": {
+      "clip": "Idle",
+      "loop": true
+    },
+    "walk": {
+      "clip": "Walking_A",
+      "loop": true,
+      "events": [
+        {
+          "t": 0.25,
+          "e": "footstep"
+        },
+        {
+          "t": 0.78,
+          "e": "footstep"
+        }
+      ]
+    },
+    "run": {
+      "clip": "Running_A",
+      "loop": true,
+      "events": [
+        {
+          "t": 0.18,
+          "e": "footstep"
+        },
+        {
+          "t": 0.58,
+          "e": "footstep"
+        }
+      ]
+    },
+    "sprint": {
+      "clip": "Running_B",
+      "loop": true,
+      "speed": 1.15,
+      "events": [
+        {
+          "t": 0.2,
+          "e": "footstep"
+        },
+        {
+          "t": 0.73,
+          "e": "footstep"
+        }
+      ]
+    },
+    "roll": {
+      "clip": "Dodge_Forward",
+      "speed": 0.8,
+      "note": "0.4 s clip slowed to the 0.5 s roll"
+    },
+    "attack_light_1": {
+      "clip": "1H_Melee_Attack_Slice_Diagonal",
+      "speed": 1.45,
+      "hit": 0.343,
+      "hit_end": 0.505,
+      "cancel_open": 0.545,
+      "cancel_close": 0.945
+    },
+    "attack_light_2": {
+      "clip": "1H_Melee_Attack_Slice_Horizontal",
+      "speed": 1.45,
+      "hit": 0.21,
+      "hit_end": 0.372,
+      "cancel_open": 0.412,
+      "cancel_close": 0.812
+    },
+    "attack_light_3": {
+      "clip": "1H_Melee_Attack_Stab",
+      "speed": 1.6,
+      "hit": 0.313,
+      "hit_end": 0.497,
+      "cancel_open": 0.537,
+      "cancel_close": 0.937
+    },
+    "attack_heavy": {
+      "clip": "1H_Melee_Attack_Chop",
+      "speed": 1.1,
+      "hit": 0.512,
+      "hit_end": 0.675,
+      "cancel_open": 0.715,
+      "cancel_close": 1.067,
+      "charge_hold": 0.352,
+      "note": "charge holds the clip at charge_hold while the button is held"
+    },
+    "block": {
+      "clip": "Blocking",
+      "loop": true
+    },
+    "block_hit": {
+      "clip": "Block_Hit",
+      "speed": 1.6
+    },
+    "parry": {
+      "clip": "Block_Attack",
+      "speed": 1.5
+    },
+    "riposte": {
+      "clip": "1H_Melee_Attack_Stab",
+      "speed": 1.5,
+      "hit": 0.318,
+      "hit_end": 0.495,
+      "cancel_open": 0.535,
+      "cancel_close": 0.935
+    },
+    "hit": {
+      "clip": "Hit_A",
+      "speed": 1.3
+    },
+    "stagger": {
+      "clip": "Hit_B",
+      "speed": 1.0
+    },
+    "drink": {
+      "clip": "Use_Item",
+      "speed": 1.33,
+      "hit": 0.75,
+      "note": "hit = moment the flame is restored (0.75/1.33 = 0.56 s); total 1.2 s"
+    },
+    "interact": {
+      "clip": "Interact",
+      "speed": 1.0
+    },
+    "rest": {
+      "clip": "Sit_Floor_Down",
+      "speed": 1.0
+    },
+    "rest_idle": {
+      "clip": "Sit_Floor_Idle",
+      "loop": true
+    },
+    "rest_up": {
+      "clip": "Sit_Floor_StandUp",
+      "speed": 1.2
+    },
+    "death": {
+      "clip": "Death_A",
+      "speed": 0.8
+    },
+    "cheer": {
+      "clip": "Cheer"
+    }
   },
   "substitutions": {
     "parry": "No dedicated parry clip: Block_Attack (shield bash) reads as a deflect.",

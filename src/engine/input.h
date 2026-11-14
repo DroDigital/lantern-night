@@ -64,6 +64,8 @@ public:
     void Poll(float frameDt, bool captureMouse);
     // Frame for the next fixed step; edges are cleared after the first call per Poll.
     InputFrame ConsumeStep();
+    // Current frame without consuming edges (UI navigation).
+    const InputFrame& Peek() const { return frame_; }
     // Inject a scripted frame instead of devices (smoke test / capture).
     void SetScripted(bool on) { scripted_ = on; }
     bool Scripted() const { return scripted_; }

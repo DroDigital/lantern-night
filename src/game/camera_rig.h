@@ -13,7 +13,7 @@ struct CameraTuning {
     float distance = 4.5f, minDistance = 0.6f, pivotHeight = 1.15f;
     float pitchDefault = 22.0f, pitchMin = -35.0f, pitchMax = 65.0f;
     float followSharpness = 12.0f, collisionRadius = 0.25f, collisionIn = 30.0f, collisionOut = 4.0f;
-    float fov = 55.0f, lockonPitch = 18.0f, lockonTurn = 8.0f;
+    float fov = 55.0f, lockonPitch = 18.0f, lockonTurn = 8.0f, lockonShoulder = 0.55f, lockonDistance = 4.8f;
     float shakeDecay = 7.0f, shakeFrequency = 32.0f;
     void Load(const json& j);
 };
@@ -41,6 +41,7 @@ private:
     float pitch_ = 0.35f;       // radians, positive looks down
     float curDist_ = 4.5f;
     float shake_ = 0.0f, shakeTime_ = 0.0f;
+    float shoulder_ = 0.0f;
     bool shakeEnabled_ = true;
 };
 
