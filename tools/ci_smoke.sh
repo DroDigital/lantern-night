@@ -30,8 +30,13 @@ case "$OS" in
     SMOKE_DIR="$BIN/../smoke"
     rm -rf "$SMOKE_DIR"; mkdir -p "$SMOKE_DIR"
     cp "$BIN/LanternKnight.exe" "$SMOKE_DIR/"
-    if [ -d "${MESA_DIR:-}" ]; then cp "$MESA_DIR"/x64/*.dll "$SMOKE_DIR/" 2>/dev/null; fi
-    export GALLIUM_DRIVER=llvmpipe
+    if [ -n "${MESA_DIR:-}" ] && [ -d "$MESA_DIR/x64" ]; then
+      cp "$MESA_DIR"/x64/*.dll "$SMOKE_DIR/"
+      echo "Mesa DLLs next to the smoke-test exe:"; ls "$SMOKE_DIR"
+    else
+      echo "::warning::MESA_DIR not usable: '${MESA_DIR:-}'"
+    fi
+    export GALLIUM_DRIVER=llvmpipe MESA_GL_VERSION_OVERRIDE=3.3
     "$SMOKE_DIR/LanternKnight.exe" --smoke-test --user-dir "$(cygpath -w "$USERDIR" 2>/dev/null || echo "$USERDIR")"
     rc=$?
     if [ $rc -eq 3 ]; then run_validate "no OpenGL 3.3 context" "$BIN/LanternKnight.exe"; fi

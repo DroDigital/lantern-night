@@ -65,10 +65,15 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          mkdir -p "$RUNNER_TEMP/mesa" && cd "$RUNNER_TEMP/mesa"
-          gh release download --repo pal1000/mesa-dist-win --pattern 'mesa3d-*-release-msvc.7z' --output mesa.7z \
-            && 7z x -y mesa.7z > /dev/null && echo "MESA_DIR=$RUNNER_TEMP/mesa" >> "$GITHUB_ENV" \
-            || echo "::warning::Could not fetch mesa-dist-win"
+          MESA="$(cygpath -u "$RUNNER_TEMP")/mesa"
+          mkdir -p "$MESA" && cd "$MESA"
+          if gh release download --repo pal1000/mesa-dist-win --pattern 'mesa3d-*-release-msvc.7z' --output mesa.7z \
+             && 7z x -y mesa.7z > /dev/null; then
+            ls x64 || true
+            echo "MESA_DIR=$MESA" >> "$GITHUB_ENV"
+          else
+            echo "::warning::Could not fetch mesa-dist-win"
+          fi
 
       - name: Smoke test
         run: tools/ci_smoke.sh build/release/bin
