@@ -26,5 +26,17 @@
 ### Known issues
 - Gamepad feel was tuned from data and the self-test only; no physical pad was attached in the build environment.
 
+## M2 Lantern loop: done
+- Flame is health; the lantern light (range 4 to 12 m, intensity, flicker) follows flame/max, sputters below 25%, the vignette tightens and a crackle loop plays.
+- Oil flasks: 45 flame over a 1.2 s drink (heal lands at 0.56 s; a hit before that wastes the flask). Start with 3; shrines refill.
+- Lantern shrines (`data/world.json`, zone `shrines`): light (1 s interact), rest (refill flame and flasks, respawn non-boss enemies, set the respawn point, save), shrine menu with level up (Vigor/Endurance/Might, cost 50 x 1.15^level) and weapon swap.
+- Death: "YOUR FLAME GOES OUT", all embers drop as a glowing pile (light, halo, sparks) at the death spot; respawn at the last shrine; touching the pile returns them; dying again first loses them (rules in `core/combat_rules`, unit-tested).
+- Save: `save.json` in the per-user folder on light/rest/level/death/quit; temp file + rename, one `.bak` backup, versioned with v1 to v2 migration (unit-tested).
+- Pause menu (resume, settings placeholder, save and quit).
+- `--smoke-test` now does everything the spec lists: combat self-test, loads every model/texture and decodes every sound, validates all data, then a bot drives the knight in god mode (kill an enemy, light and rest at a shrine, save, read the save back and compare, rebuild the session from disk, wander the nav graph) for 3,600 fixed steps; fails on any error, missing asset, NaN position or save mismatch.
+
+### Known issues
+- The settings entry in the pause menu is a placeholder until M6.
+
 ## Next
-- M2 Lantern loop: flame as health, flasks, shrine, death and ember pile, leveling, save and load.
+- M3 Enemies: minion, warrior, rogue and mage AI with telegraphs, posture and attack tokens.

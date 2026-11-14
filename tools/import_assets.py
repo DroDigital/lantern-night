@@ -63,7 +63,7 @@ def main():
     mk = dl / "megakit"
     qd = out / "quaternius_props"
     n = copy_glob(mk / "Exports/glTF", qd, ["*.gltf", "*.bin"])
-    for tex in sorted((mk / "Textures").glob("T_Trim_*.png")):
+    for tex in sorted(list((mk / "Textures").glob("T_Trim_*.png")) + [mk / "Textures/T_Page_Noise.png"]):
         img = Image.open(tex)
         img = img.resize((512, 512), Image.LANCZOS)
         img.save(qd / tex.name, optimize=True)

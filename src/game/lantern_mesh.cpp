@@ -24,10 +24,10 @@ void LanternMesh::Unload() {
     ready_ = false;
 }
 
-void LanternMesh::Draw(Renderer& r, Vector3 p, float yaw, float flame, float flicker, Vector3 glow) const {
+void LanternMesh::Draw(Renderer& r, Vector3 p, float yaw, float flame, float flicker, Vector3 glow, float sc) const {
     if (!ready_) return;
-    Matrix rot = MatrixRotateY(yaw);
-    auto at = [&](float y) { return MatrixMultiply(rot, MatrixTranslate(p.x, p.y + y, p.z)); };
+    Matrix rot = MatrixMultiply(MatrixScale(sc, sc, sc), MatrixRotateY(yaw));
+    auto at = [&](float y) { return MatrixMultiply(rot, MatrixTranslate(p.x, p.y + y * sc, p.z)); };
     Material m = mat_;
     DrawParams dp;
     // Glass: emissive with the flame.
@@ -39,7 +39,7 @@ void LanternMesh::Draw(Renderer& r, Vector3 p, float yaw, float flame, float fli
     m.maps[MATERIAL_MAP_DIFFUSE].color = Color{52, 46, 56, 255};
     r.DrawStaticMesh(cap_, m, at(0.075f), p, dp);
     r.DrawStaticMesh(base_, m, at(-0.1f), p, dp);
-    Matrix ringM = MatrixMultiply(MatrixMultiply(MatrixRotateX(PI / 2), rot), MatrixTranslate(p.x, p.y + 0.17f, p.z));
+    Matrix ringM = MatrixMultiply(MatrixMultiply(MatrixRotateX(PI / 2), rot), MatrixTranslate(p.x, p.y + 0.17f * sc, p.z));
     r.DrawStaticMesh(ring_, m, ringM, p, dp);
 }
 

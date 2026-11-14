@@ -1,0 +1,18 @@
+{
+  "_doc": "World interactables and the death loop.",
+  "shrine": {
+    "interact_range": 1.8,
+    "light_time": 1.0,
+    "respawn_offset": 1.3,
+    "pedestal": "kaykit_dungeon/column.gltf.glb",
+    "lantern_scale": 3.2,
+    "lantern_height": 0.95,
+    "light_unlit": { "color": [0.35, 0.25, 0.2], "intensity": 0.5, "range": 3.0 },
+    "light_lit": { "color": [1.0, 0.7, 0.35], "intensity": 4.0, "range": 7.0 }
+  },
+  "death": { "banner_delay": 0.6, "respawn_after": 4.0, "banner_text": "YOUR FLAME GOES OUT" },
+  "ember_pile": { "pickup_range": 1.1, "light": { "color": [1.0, 0.45, 0.12], "intensity": 2.5, "range": 4.0 } },
+  "brazier": { "interact_range": 1.6, "light_time": 1.0, "model": "quaternius_props/Cauldron.gltf", "scale": 1.3, "fire_height": 0.55 },
+  "gate": { "interact_range": 1.8, "open_time": 1.0 },
+  "pickup_range": 1.4
+}

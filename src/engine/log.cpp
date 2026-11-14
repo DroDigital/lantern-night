@@ -32,6 +32,8 @@ void RaylibCallback(int logLevel, const char* text, va_list args) {
     if (l == Level::Info && !g_verbose) return;  // raylib is chatty; keep the console clean
     char buf[1024];
     vsnprintf(buf, sizeof buf, text, args);
+    // A file raylib cannot open is a missing asset: treat it as an error.
+    if (l == Level::Warn && std::strstr(buf, "Failed to open file")) l = Level::Error;
     Write(l, "[raylib] %s", buf);
 }
 }  // namespace

@@ -1,0 +1,11 @@
+{
+  "_doc": "Level up with embers at a shrine. Cost = cost_base * cost_growth ^ level (level = vigor + endurance + might).",
+  "cost_base": 50,
+  "cost_growth": 1.15,
+  "stats": {
+    "vigor":     { "label": "Vigor",     "desc": "+8 max flame" },
+    "endurance": { "label": "Endurance", "desc": "+6 stamina" },
+    "might":     { "label": "Might",     "desc": "+5% damage" }
+  },
+  "max_level_per_stat": 30
+}

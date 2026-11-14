@@ -10,7 +10,7 @@ public:
     void Init();
     void Unload();
     // pos = centre of the glass; flame 0..1 drives the glow.
-    void Draw(Renderer& r, Vector3 pos, float yawRad, float flame, float flicker, Vector3 glowColor) const;
+    void Draw(Renderer& r, Vector3 pos, float yawRad, float flame, float flicker, Vector3 glowColor, float scale = 1.0f) const;
 
 private:
     Mesh glass_{}, cap_{}, base_{}, ring_{};

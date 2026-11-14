@@ -19,6 +19,7 @@ public:
     std::vector<Vector3> Path(Vector3 from, Vector3 to) const;
     void SetBlocked(int level, int cx, int cz, bool blocked);   // closed gates
     int NodeCount() const { return int(nodes_.size()); }
+    Vector3 NodeCenter(int i) const { return nodes_[size_t(i)].center; }
 
 private:
     struct Node {

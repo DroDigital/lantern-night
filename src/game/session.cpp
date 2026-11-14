@@ -20,6 +20,8 @@ static Vector3 V3(const json& j, Vector3 d) {
     return Vector3{j[0].get<float>(), j[1].get<float>(), j[2].get<float>()};
 }
 
+static bool prog_pile_emit(const SaveData& p, int step) { return p.pile.active && step % 2 == 0; }
+
 static float Rand01(unsigned& s) {
     s = s * 1664525u + 1013904223u;
     return float((s >> 8) & 0xFFFF) / 65535.0f;
@@ -99,6 +101,7 @@ bool Session::Load(const std::string& zoneFile) {
     if (!world_.Build(zone, ctx_.assets, ctx_.physics)) return false;
     nav_.Build(zone);
     BuildLights();
+    BuildInteractables();
     lanternMesh_.Init();
     feel_ = ctx_.data.Get("feel.json");
     particles_.Init(feel_.value("particle_cap", 3000));
@@ -109,7 +112,11 @@ bool Session::Load(const std::string& zoneFile) {
     if (!player_.Init(ctx_, spawn, zone.playerYaw)) return false;
     ReloadTunables();
     SpawnEnemies();
-    cam_.Reset(spawn, zone.playerYaw * DEG2RAD + PI);
+    ApplyProgress();
+    float yaw = zone.playerYaw;
+    spawn = RespawnPoint(&yaw);
+    player_.Teleport(spawn, yaw);
+    cam_.Reset(spawn, yaw * DEG2RAD + PI);
     ctx_.audio.PlayMusic(zone.ambientMusic, 2.0f);
     return true;
 }
@@ -163,6 +170,16 @@ void Session::GatherLights(std::vector<PointLight>& out, float t) {
         PointLight L = z.light;
         float k = z.baseIntensity * (z.flicker > 0 ? Flicker(t, 8.0f, z.flicker, z.seed) : 1.0f);
         L.color = Vector3Scale(z.baseColor, k);
+        out.push_back(L);
+    }
+    const SaveData& prog = ctx_.state.progress;
+    if (prog.pile.active) {
+        const json& pl = world_cfg_.value("ember_pile", json::object()).value("light", json::object());
+        PointLight L;
+        L.pos = Vector3{prog.pile.x, prog.pile.y + 0.4f, prog.pile.z};
+        float k = pl.value("intensity", 2.5f) * Flicker(t, 5.0f, 0.15f, 3.0f);
+        L.color = Vector3Scale(V3(pl.value("color", json()), Vector3{1, 0.45f, 0.12f}), k);
+        L.range = pl.value("range", 4.0f);
         out.push_back(L);
     }
     for (const auto& p : projectiles_) {
@@ -503,7 +520,7 @@ void Session::ProcessFx() {
             case FxType::EnemyDeath:
                 burst("death_embers", e.pos, Vector3{0, 1, 0}, 1.0f);
                 audio.PlayAt("skeleton_die", e.pos);
-                embers_ += int(e.strength);
+                ctx_.state.progress.embers += int(e.strength);
                 emberFlash_ = 1.0f;
                 break;
             case FxType::Death: audio.Play("death"); break;
@@ -522,7 +539,10 @@ void Session::Step(const InputFrame& in, float dt) {
     if (IsKeyPressed(KEY_F1)) showDebug_ = !showDebug_;
     if (showDebug_ && IsKeyPressed(KEY_G)) ctx_.state.godMode = !ctx_.state.godMode;
 #endif
-    UpdateLockOn(in, dt);
+    UpdateMenus(in);
+    InputFrame pin = in;
+    if (menu_ != Menu::None) pin = InputFrame{};  // menus own the input
+    UpdateLockOn(pin, dt);
     Enemy* lock = LockTarget();
     Vector3 lockPt = lock ? lock->LockPoint() : Vector3{};
 
@@ -537,7 +557,9 @@ void Session::Step(const InputFrame& in, float dt) {
         if (e->Staggered() && Vector3Distance(e->Pos(), player_.Pos()) < 1.8f &&
             geom::WithinArc(G(player_.Facing()), G(Vector3Subtract(e->Pos(), player_.Pos())), 50))
             pe.riposteReady = true;
-    player_.Step(in, pe, dt, fx_);
+    player_.Step(pin, pe, dt, fx_);
+    UpdateInteract(pin, dt);
+    UpdateDeath(dt);
 
     EnemyEnv ee;
     ee.playerPos = player_.Pos();
@@ -590,7 +612,20 @@ void Session::Step(const InputFrame& in, float dt) {
 
     lock = LockTarget();
     lockPt = lock ? lock->LockPoint() : Vector3{};
-    cam_.Update(dt, player_.Pos(), in.look, lock ? &lockPt : nullptr, &ctx_.physics);
+    cam_.Update(dt, player_.Pos(), pin.look, lock ? &lockPt : nullptr, &ctx_.physics);
+    // Ember pile sparkles.
+    if (prog_pile_emit(ctx_.state.progress, steps_)) {
+        const SaveData& pr = ctx_.state.progress;
+        ParticleDesc d;
+        unsigned sd = unsigned(steps_ * 9781u);
+        d.pos = Vector3{pr.pile.x + (Rand01(sd) - 0.5f) * 0.5f, pr.pile.y + 0.05f, pr.pile.z + (Rand01(sd) - 0.5f) * 0.5f};
+        d.vel = Vector3{0, 0.4f + Rand01(sd) * 0.5f, 0};
+        d.life = 1.4f;
+        d.size0 = 0.05f;
+        d.color0 = Vector4{6.0f, 2.6f, 0.7f, 1.0f};
+        d.color1 = Vector4{2.0f, 0.4f, 0.1f, 0.0f};
+        particles_.Emit(d);
+    }
     ctx_.audio.SetListener(cam_.Cam().position, cam_.Forward(), cam_.Right());
 }
 
@@ -617,17 +652,23 @@ void Session::Render(float alpha, int sw, int sh) {
         if (Vector3Distance(e->Pos(), cam.position) < drawDistance_) e->Draw(r, alpha, realTime_);
     lanternMesh_.Draw(r, player_.LanternPos(), player_.Yaw(), player_.FlameFrac(), lanternState_.flicker,
                       Vector3{1.0f, 0.55f, 0.2f});
+    DrawInteractables(r);
     // Additive pass: halos, shafts, trails, particles, bolts.
     r.DrawHalo(player_.LanternPos(), lantern_.haloSize * (0.8f + 0.2f * lanternState_.flicker), Color{255, 170, 90, 255},
                lantern_.haloIntensity * lanternState_.flicker * (0.3f + 0.7f * player_.FlameFrac()));
     for (const auto& z : zoneLights_)
         if (z.halo) r.DrawHalo(z.light.pos, 0.9f, Color{255, 150, 70, 255}, 1.4f * Flicker(realTime_, 8.0f, z.flicker, z.seed));
     for (const auto& p : projectiles_) r.DrawHalo(p.pos, p.def->boltRadius * 5.0f, Color{120, 170, 255, 255}, 3.0f);
+    if (ctx_.state.progress.pile.active) {
+        const auto& pl = ctx_.state.progress.pile;
+        r.DrawHalo(Vector3{pl.x, pl.y + 0.3f, pl.z}, 1.1f, Color{255, 140, 50, 255}, 1.8f * Flicker(realTime_, 5.0f, 0.2f, 1.0f));
+    }
     player_.DrawTrail(simTime_, trailShader_, trailIntensityLoc_);
     particles_.Draw(cam);
     r.EndScene();
     r.Present(sw, sh, flash_, flashColor_);
     RenderHud(sw, sh);
+    RenderMenus();
     if (showDebug_) RenderDebug(sw, sh);
 }
 
@@ -642,7 +683,8 @@ void Session::RenderHud(int sw, int sh) {
     hs.exhausted = player_.stamina.exhausted;
     hs.flasks = player_.flasks;
     hs.flaskMax = player_.flaskMax;
-    hs.embers = embers_;
+    hs.embers = ctx_.state.progress.embers;
+    hs.prompt = promptText_;
     hs.emberFlash = emberFlash_;
     hs.lowFlamePulse = std::clamp(1.0f - player_.FlameFrac() / std::max(lantern_.sputterBelow, 0.01f), 0.0f, 1.0f);
     DrawHud(ui, hs, realTime_);

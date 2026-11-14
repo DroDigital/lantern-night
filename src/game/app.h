@@ -50,6 +50,7 @@ private:
     int RunCapture();
     int RunSmoke();
     int RunAnimReport();
+    int PreloadEverything();
     bool SaveScreenshot(const std::string& path);
     void RenderFrame(float alpha);
     InputFrame CaptureScript(const std::string& scene, int frame, int total);

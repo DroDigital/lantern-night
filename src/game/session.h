@@ -18,6 +18,7 @@
 #include "game/lantern_mesh.h"
 #include "game/player/player.h"
 #include "game/ui/hud.h"
+#include "game/ui/menus.h"
 #include "game/world/world.h"
 
 namespace lk {
@@ -30,6 +31,13 @@ struct ZoneLight {
     Vector3 baseColor{1, 1, 1};
     std::string id;
     bool halo = false;
+};
+
+struct Shrine {
+    std::string id, name;
+    Vector3 pos{};
+    float yaw = 0;
+    int light = -1;   // index into zoneLights_
 };
 
 struct Projectile {
@@ -59,6 +67,7 @@ public:
     Player& GetPlayer() { return player_; }
     CameraRig& Camera() { return cam_; }
     World& GetWorld() { return world_; }
+    const Nav& GetNav() const { return nav_; }
     std::vector<std::unique_ptr<Enemy>>& Enemies() { return enemies_; }
     int StepCount() const { return steps_; }
     float SimTime() const { return simTime_; }
@@ -67,6 +76,18 @@ public:
     void ForceLock(int enemyId) { lockId_ = enemyId; }
     int Kills() const { return kills_; }
     float Alpha() const { return alpha_; }
+
+    // Progress (M2)
+    bool SaveProgress();
+    bool MenuOpen() const { return menu_ != Menu::None; }
+    bool WantsQuit() const { return wantsQuit_; }
+    bool PlayerDead() const { return !player_.Alive(); }
+    int RestCount() const { return restCount_; }
+    int DeathCount() const { return deathCount_; }
+    const std::vector<Shrine>& Shrines() const { return shrines_; }
+    // Interact with whatever is in range right now (also used by the smoke-test bot).
+    std::string InteractPromptTarget() const { return promptTarget_; }
+    void OpenPause() { menu_ = Menu::Pause; ctx_.ui.ResetFocus(); }
 
 private:
     void BuildLights();
@@ -79,6 +100,18 @@ private:
     void ProcessFx();
     void Hitstop(float seconds);
     void RenderHud(int sw, int sh);
+    // session_world.cpp
+    void BuildInteractables();
+    void ApplyProgress();
+    void UpdateInteract(const InputFrame& in, float dt);
+    void UpdateDeath(float dt);
+    void UpdateMenus(const InputFrame& in);
+    void RestAtShrine(const Shrine& s);
+    void RespawnWorld();
+    Vector3 RespawnPoint(float* yawDeg) const;
+    void DrawInteractables(Renderer& r);
+    void RenderMenus();
+    bool EquipWeapon(const std::string& key);
     void RenderDebug(int sw, int sh);
 
     Ctx& ctx_;
@@ -113,8 +146,20 @@ private:
     float flameTrail_ = 1;
     float emberAcc_ = 0;
     int kills_ = 0;
-    int embers_ = 0;
     float emberFlash_ = 0;
+    // Shrines, death, menus
+    enum class Menu { None, Shrine, Pause };
+    Menu menu_ = Menu::None;
+    ShrineMenuState shrineMenu_;
+    std::vector<Shrine> shrines_;
+    const Shrine* restingAt_ = nullptr;
+    std::string promptText_, promptTarget_;
+    float deathTimer_ = 0;
+    int restCount_ = 0, deathCount_ = 0;
+    bool wantsQuit_ = false;
+    std::string pendingInteract_;
+    float pileGlow_ = 0;
+    json world_cfg_;
     bool showDebug_ = false;
     float drawDistance_ = 34.0f;
     Vector3 blobTune_{0.55f, 0.65f, 0};

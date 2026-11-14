@@ -14,6 +14,7 @@
 #include "game/validate.h"
 #include "game/anim_report.h"
 #include "game/selftest.h"
+#include "game/smoke_bot.h"
 #include "rlgl.h"
 
 namespace fs = std::filesystem;
@@ -99,9 +100,12 @@ void App::RenderFrame(float alpha) {
 
 int App::RunInteractive() {
     if (!InitEngine(opt_.width, opt_.height, false)) return 3;
+    if (save_.Load(state_.progress)) LK_INFO("loaded save from %s", save_.Path().c_str());
     session_ = std::make_unique<Session>(*ctx_);
     if (!session_->Load(opt_.zone)) return 1;
-    while (!WindowShouldClose()) {
+    DisableCursor();
+    bool cursorFree = false;
+    while (!WindowShouldClose() && !session_->WantsQuit()) {
         float frameDt = std::min(GetFrameTime(), 0.25f);
 #if defined(LK_DEBUG_TOOLS)
         if (IsKeyPressed(KEY_F5)) {
@@ -113,11 +117,18 @@ int App::RunInteractive() {
         }
 #endif
         if (IsWindowResized()) renderer_.Resize(GetRenderWidth(), GetRenderHeight());
-        input_.Poll(frameDt, true);
+        bool wantFree = session_->MenuOpen();
+        if (wantFree != cursorFree) {
+            if (wantFree) EnableCursor();
+            else DisableCursor();
+            cursorFree = wantFree;
+        }
+        input_.Poll(frameDt, !cursorFree);
         session_->Advance(frameDt);
         audio_.Update(frameDt);
         RenderFrame(session_->Alpha());
     }
+    session_->SaveProgress();  // save on quit
     return 0;
 }
 
@@ -127,6 +138,9 @@ InputFrame App::CaptureScript(const std::string& scene, int f, int total) {
         if (scene == "zone_overview" && f == 0) in.look = {0.0f, 0.25f};
         // Walk toward the far wall, then idle for the last part so the pose settles.
         if (f < total * 2 / 3) in.move = {0.0f, 0.5f};
+    } else if (scene == "shrine_menu") {
+        if (f == 5 || f == 80) in.Press(Act::Interact);
+    } else if (scene == "death") {
     } else if (scene == "swing") {
         if (f == 2) in.Press(Act::Attack);
     } else if (scene == "parry") {
@@ -153,11 +167,12 @@ int App::RunCapture() {
     fs::create_directories(opt_.captureOut, ec);
     std::vector<std::string> scenes;
     if (opt_.captureScene == "all")
-        scenes = {"lighting_full", "lighting_half", "lighting_low", "zone_overview", "combat", "swing", "parry", "hud"};
+        scenes = {"lighting_full", "lighting_half", "lighting_low", "zone_overview", "combat", "swing", "parry", "hud", "shrine_menu", "death"};
     else scenes = {opt_.captureScene};
     input_.SetScripted(true);
     int failures = 0;
     for (const auto& scene : scenes) {
+        state_.ResetProgress();
         session_.reset();
         session_ = std::make_unique<Session>(*ctx_);
         std::string zone = opt_.zone;
@@ -173,6 +188,18 @@ int App::RunCapture() {
         else if (scene == "lighting_low") session_->SetFlameFraction(0.15f);
         else if (scene == "hud") session_->SetFlameFraction(0.62f);
         int frames = opt_.captureFrames;
+        if (scene == "shrine_menu" && !session_->Shrines().empty()) {
+            const Shrine& sh = session_->Shrines().front();
+            session_->GetPlayer().Teleport(Vector3Add(sh.pos, Vector3{-1.1f, 0, 0}), 90.0f);
+            session_->Camera().Reset(session_->GetPlayer().Pos(), 90.0f * DEG2RAD + PI);
+            state_.progress.embers = 240;
+            frames = 140;
+        }
+        if (scene == "death") {
+            FxQueue fx;
+            session_->GetPlayer().Kill(fx);
+            frames = 150;
+        }
         if ((scene == "swing" || scene == "parry") && !session_->Enemies().empty()) {
             Enemy* d = session_->Enemies()[0].get();
             Vector3 ep = d->Pos();
@@ -221,32 +248,127 @@ int App::RunAnimReport() {
     return WriteAnimReport(*ctx_, opt_.animReport);
 }
 
+int App::PreloadEverything() {
+    int before = assets_.FailedCount();
+    int models = 0, textures = 0, sounds = 0;
+    for (auto& e : fs::recursive_directory_iterator(paths::AssetDir())) {
+        if (!e.is_regular_file()) continue;
+        std::string rel = fs::relative(e.path(), paths::AssetDir()).generic_string();
+        std::string ext = e.path().extension().string();
+        if (ext == ".glb" || ext == ".gltf") {
+            assets_.LoadModel(rel);
+            ++models;
+        } else if (ext == ".png" && rel.rfind("quaternius_props/", 0) != 0 && rel.rfind("kaykit", 0) != 0) {
+            assets_.LoadTexture(rel, false);
+            ++textures;
+        } else if (ext == ".ogg" || ext == ".wav") {
+            // Decode without needing an audio device (CI has none).
+            Wave w = LoadWave(e.path().string().c_str());
+            if (w.frameCount == 0) {
+                LK_ERROR("smoke: cannot decode %s", rel.c_str());
+            }
+            UnloadWave(w);
+            ++sounds;
+        }
+    }
+    LK_INFO("smoke: loaded %d models, %d textures, decoded %d sounds", models, textures, sounds);
+    return assets_.FailedCount() - before;
+}
+
 int App::RunSmoke() {
     if (!InitEngine(1280, 720, false)) return 3;
     if (RunCombatSelfTest(*ctx_) != 0) {
         LK_ERROR("smoke: combat self-test failed");
         return 1;
     }
-    session_ = std::make_unique<Session>(*ctx_);
-    if (!session_->Load(opt_.zone)) return 1;
+    if (PreloadEverything() != 0) return 1;
+    if (ValidateContent() != 0) return 1;
+
+    state_.ResetProgress();
+    state_.godMode = true;
+    save_.Delete();
     input_.SetScripted(true);
-    for (int i = 0; session_->StepCount() < 3600 && i < 20000; ++i) {
-        InputFrame in;
-        in.move = {0.3f * std::sin(float(i) * 0.01f), 0.8f};
-        input_.PushScripted(in);
-        session_->Advance(1.0f / 60.0f);
-        Vector3 p = session_->PlayerPos();
-        if (std::isnan(p.x) || std::isnan(p.y) || std::isnan(p.z)) {
-            LK_ERROR("smoke: NaN player position at step %d", i);
+    int totalSteps = 0;
+    auto newSession = [&]() -> bool {
+        session_.reset();
+        session_ = std::make_unique<Session>(*ctx_);
+        return session_->Load(opt_.zone);
+    };
+    if (!newSession()) return 1;
+
+    SmokeBot bot;
+    std::vector<SmokeBot::Goal> plan = {SmokeBot::Goal::Kill, SmokeBot::Goal::Rest, SmokeBot::Goal::Wander};
+    size_t planIdx = 0;
+    bot.Start(plan[0]);
+    bool reloaded = false;
+    int guard = 0;
+    while (totalSteps < 3600 && guard++ < 40000) {
+        bool done = false, failed = false;
+        InputFrame in = bot.Think(*session_, done, failed);
+        if (failed) {
+            LK_ERROR("smoke: bot failed: %s", bot.Status().c_str());
             return 1;
         }
-        if (i % 30 == 0) RenderFrame(1.0f);
+        if (done) {
+            LK_INFO("smoke: %s (step %d)", bot.Status().c_str(), totalSteps);
+            if (bot.Current() == SmokeBot::Goal::Rest && !reloaded) {
+                // Save, then reload from disk and compare.
+                if (!session_->SaveProgress()) return 1;
+                SaveData disk;
+                if (!save_.Load(disk)) {
+                    LK_ERROR("smoke: save could not be read back");
+                    return 1;
+                }
+                if (!(disk == state_.progress)) {
+                    LK_ERROR("smoke: save mismatch after reload");
+                    return 1;
+                }
+                SaveData before = state_.progress;
+                state_.progress = disk;
+                totalSteps += session_->StepCount();
+                if (!newSession()) return 1;
+                if (!state_.progress.litShrines.count(before.lastShrine) || state_.progress.embers != before.embers) {
+                    LK_ERROR("smoke: progress lost on reload");
+                    return 1;
+                }
+                LK_INFO("smoke: save round-trip OK (%zu shrines lit, %d embers)", state_.progress.litShrines.size(),
+                        state_.progress.embers);
+                reloaded = true;
+                totalSteps -= session_->StepCount();
+            }
+            if (planIdx + 1 < plan.size()) bot.Start(plan[++planIdx]);
+        }
+        input_.PushScripted(in);
+        int before = session_->StepCount();
+        session_->Advance(1.0f / 60.0f);
+        totalSteps += session_->StepCount() - before;
+        Vector3 p = session_->PlayerPos();
+        if (std::isnan(p.x) || std::isnan(p.y) || std::isnan(p.z)) {
+            LK_ERROR("smoke: NaN player position at step %d", totalSteps);
+            return 1;
+        }
+        for (auto& e : session_->Enemies()) {
+            Vector3 q = e->Pos();
+            if (std::isnan(q.x) || std::isnan(q.y) || std::isnan(q.z)) {
+                LK_ERROR("smoke: NaN enemy position at step %d", totalSteps);
+                return 1;
+            }
+        }
+        if (p.y < -20.0f) {
+            LK_ERROR("smoke: player fell out of the world at step %d", totalSteps);
+            return 1;
+        }
+        if (totalSteps % 30 == 0 || session_->MenuOpen()) RenderFrame(1.0f);
+    }
+    if (!reloaded) {
+        LK_ERROR("smoke: the scripted path never reached the save/reload step");
+        return 1;
     }
     if (log::ErrorCount() > 0) {
         LK_ERROR("smoke: %d errors (last: %s)", log::ErrorCount(), log::LastError().c_str());
         return 1;
     }
-    LK_INFO("smoke: OK");
+    LK_INFO("smoke: OK (%d steps, %d kills)", totalSteps, session_->Kills());
     return 0;
 }
 
