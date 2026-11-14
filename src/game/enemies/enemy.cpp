@@ -321,9 +321,10 @@ StrikeResult Enemy::TakeStrike(const PlayerStrike& s, float critMult, FxQueue& f
     aggro_ = true;
     Vector3 toAtk = Vector3Subtract(s.from, pos_);
     bool frontal = geom::WithinArc(G(Facing()), G(toAtk), def_->shieldArc * 0.5f);
-    bool canBlock = def_->hasShield && def_->shieldBlocksLight && !s.heavy && frontal &&
-                    (state_ == EState::Idle || state_ == EState::Strafe || state_ == EState::Approach ||
-                     state_ == EState::Recover || state_ == EState::Hit || (state_ == EState::Attack && !swing_.active && !holdDone_));
+    // The shield is up whenever the warrior is not committed to a swing or staggered.
+    bool committed = state_ == EState::Attack && (swing_.active || holdDone_);
+    bool canBlock = def_->hasShield && def_->shieldBlocksLight && !s.heavy && frontal && !committed &&
+                    state_ != EState::Stagger && state_ != EState::Teleport;
     if (canBlock) {
         r.blocked = true;
         swing_.Stop();
@@ -409,8 +410,21 @@ void Enemy::Think(const EnemyEnv& env, float dt, FxQueue& fx) {
                 }
                 break;
             }
-            // Return to the spawn point when not aggroed.
-            if (FlatDist(pos_, spawnPos_) > 0.6f) {
+            // Patrol between points, or return to the spawn point when not aggroed.
+            if (!patrol_.empty()) {
+                Vector3 tgt = patrol_[patrolIdx_ % patrol_.size()];
+                if (FlatDist(pos_, tgt) < 0.5f) {
+                    patrolWait_ += dt;
+                    vis_.Play("idle", 0.25f);
+                    if (patrolWait_ > 1.5f) {
+                        patrolWait_ = 0;
+                        patrolIdx_ = (patrolIdx_ + 1) % patrol_.size();
+                    }
+                } else {
+                    MoveToward(tgt, d.walkSpeed * 0.8f, env, dt);
+                    vis_.Play("walk", 0.25f);
+                }
+            } else if (FlatDist(pos_, spawnPos_) > 0.6f) {
                 MoveToward(spawnPos_, d.walkSpeed, env, dt);
                 vis_.Play("walk", 0.2f);
             } else {
@@ -609,7 +623,7 @@ void Enemy::Step(const EnemyEnv& env, float dt, FxQueue& fx) {
     hitFlash_ = std::max(0.0f, hitFlash_ - dt * 8.0f);
     glint_ = std::max(0.0f, glint_ - dt * 2.0f);
     teleportCd_ -= dt;
-    if (state_ != EState::Dead) Think(env, dt, fx);
+    if (state_ != EState::Dead && !frozenAI_) Think(env, dt, fx);
 
     vis_.Update(dt);
     for (const auto& e : vis_.Anim().Events()) {

@@ -123,14 +123,24 @@ bool Session::Load(const std::string& zoneFile) {
 
 void Session::SpawnEnemies() {
     enemies_.clear();
-    int id = 1;
     for (const auto& p : world_.Zone().enemies) {
-        const EnemyDef* d = Def(p.model);
-        if (!d) continue;
-        auto e = std::make_unique<Enemy>();
-        if (!e->Init(ctx_, *d, Vector3{p.pos.x, p.pos.y, p.pos.z}, p.rot, id++, p.id)) continue;
-        enemies_.push_back(std::move(e));
+        Enemy* e = SpawnEnemy(p.model, Vector3{p.pos.x, p.pos.y, p.pos.z}, p.rot, p.id);
+        if (e && p.extra.contains("patrol")) {
+            std::vector<Vector3> pts{Vector3{p.pos.x, p.pos.y, p.pos.z}};
+            for (const auto& q : p.extra["patrol"]) pts.push_back(Vector3{q[0].get<float>(), p.pos.y, q[1].get<float>()});
+            e->SetPatrol(pts);
+        }
     }
+}
+
+Enemy* Session::SpawnEnemy(const std::string& kind, Vector3 pos, float yawDeg, const std::string& id) {
+    const EnemyDef* d = Def(kind);
+    if (!d) return nullptr;
+    auto e = std::make_unique<Enemy>();
+    int eid = nextEnemyId_++;
+    if (!e->Init(ctx_, *d, pos, yawDeg, eid, id.empty() ? kind + std::to_string(eid) : id)) return nullptr;
+    enemies_.push_back(std::move(e));
+    return enemies_.back().get();
 }
 
 void Session::BuildLights() {

@@ -74,6 +74,10 @@ public:
     void SetShowDebug(bool on) { showDebug_ = on; }
     Enemy* LockTarget() const;
     void ForceLock(int enemyId) { lockId_ = enemyId; }
+    // Spawn an enemy at runtime (tests, boss summons). Returns nullptr on failure.
+    Enemy* SpawnEnemy(const std::string& kind, Vector3 pos, float yawDeg, const std::string& id = "");
+    const std::vector<Projectile>& Projectiles() const { return projectiles_; }
+    const AttackTokens& Tokens() const { return tokens_; }
     int Kills() const { return kills_; }
     float Alpha() const { return alpha_; }
 
@@ -146,6 +150,7 @@ private:
     float flameTrail_ = 1;
     float emberAcc_ = 0;
     int kills_ = 0;
+    int nextEnemyId_ = 1;
     float emberFlash_ = 0;
     // Shrines, death, menus
     enum class Menu { None, Shrine, Pause };

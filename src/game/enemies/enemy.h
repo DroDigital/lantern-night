@@ -155,6 +155,9 @@ public:
     void SetPos(Vector3 p);
     // Tests: the training brain swings on its next step.
     void TriggerAttackSoon() { swingTimer_ = 1e6f; }
+    void SetFrozenAI(bool f) { frozenAI_ = f; }
+    // Idle enemies walk between these points (from the zone placement's "patrol").
+    void SetPatrol(std::vector<Vector3> pts) { patrol_ = std::move(pts); patrolIdx_ = 0; }
     float SwingStartedAt() const { return swingStartedAt_; }
     float Scale() const { return def_->scale; }
 
@@ -198,6 +201,10 @@ private:
     float teleportCd_ = 0;
     float swingTimer_ = 0;
     float swingStartedAt_ = -1;
+    bool frozenAI_ = false;
+    std::vector<Vector3> patrol_;
+    size_t patrolIdx_ = 0;
+    float patrolWait_ = 0;
     float glint_ = 0;
     Color tint_ = WHITE;
     unsigned rng_ = 1;

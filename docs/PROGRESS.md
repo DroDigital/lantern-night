@@ -38,5 +38,18 @@
 ### Known issues
 - The settings entry in the pause menu is a placeholder until M6.
 
+## M3 Enemies: done
+- Four skeleton types, all data-driven (`data/enemies/*.json`, `data/anims/skeleton_*.json`):
+  - Minion (40 HP): slow two-hit combo, groups of 2 to 3.
+  - Warrior (90 HP): sword and large shield; the shield blocks light attacks from the front (any time it is not committed to a swing), heavies go through with big posture damage, flanking works.
+  - Rogue (60 HP): circles at mid range, delayed lunge with a randomised hold (mix-up timing), fast gap closer.
+  - Mage (50 HP): homing bolts (emissive, lit, particle tail), teleports away when the knight closes in.
+- AI states: idle/patrol, alert (scream), approach (A* on the tile grid across layers), strafe, attack (move picked by distance and weight, combos), recover, hit, stagger, dead, teleport. Separation between enemies.
+- Telegraphs: wind-up held 0.3 to 0.8 s at the clip's wind-up time, with a weapon glint (bright particle + sound).
+- Attack tokens: at most 2 enemies attack at once.
+- Posture: heavies and parries fill it; a full bar staggers for 1.5 s and the next hit is a 3x critical.
+- Embers drop on death; enemies respawn when the knight rests or dies.
+- Enemy self-test (`RunEnemySelfTest`, in `--selftest` and `--smoke-test`): tokens, warrior shield vs light/heavy, posture break then critical, mage bolts hit and teleport, rogue lunge speed, ember drops. All pass.
+
 ## Next
-- M3 Enemies: minion, warrior, rogue and mage AI with telegraphs, posture and attack tokens.
+- M4 World: F2 level editor, three areas, braziers, shortcuts, mini-boss, Flask Shards, greataxe.

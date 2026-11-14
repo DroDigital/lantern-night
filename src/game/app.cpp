@@ -74,7 +74,8 @@ int App::Run(const AppOptions& opt) {
     if (!opt.animReport.empty()) return RunAnimReport();
     if (opt.selfTest) {
         if (!InitEngine(1280, 720, false)) return 3;
-        return RunCombatSelfTest(*ctx_) == 0 ? 0 : 1;
+        int f = RunCombatSelfTest(*ctx_) + RunEnemySelfTest(*ctx_);
+        return f == 0 ? 0 : 1;
     }
     return RunInteractive();
 }
@@ -138,6 +139,9 @@ InputFrame App::CaptureScript(const std::string& scene, int f, int total) {
         if (scene == "zone_overview" && f == 0) in.look = {0.0f, 0.25f};
         // Walk toward the far wall, then idle for the last part so the pose settles.
         if (f < total * 2 / 3) in.move = {0.0f, 0.5f};
+    } else if (scene == "enemies") {
+        if (f < 40) in.move = {0.0f, 0.6f};
+        if (f == 41) in.Press(Act::LockOn);
     } else if (scene == "shrine_menu") {
         if (f == 5 || f == 80) in.Press(Act::Interact);
     } else if (scene == "death") {
@@ -167,7 +171,7 @@ int App::RunCapture() {
     fs::create_directories(opt_.captureOut, ec);
     std::vector<std::string> scenes;
     if (opt_.captureScene == "all")
-        scenes = {"lighting_full", "lighting_half", "lighting_low", "zone_overview", "combat", "swing", "parry", "hud", "shrine_menu", "death"};
+        scenes = {"lighting_full", "lighting_half", "lighting_low", "zone_overview", "combat", "swing", "parry", "hud", "shrine_menu", "death", "enemies"};
     else scenes = {opt_.captureScene};
     input_.SetScripted(true);
     int failures = 0;
@@ -179,6 +183,7 @@ int App::RunCapture() {
         if (scene.rfind("lighting", 0) == 0) zone = "lighting_test.json";
         bool training = scene == "combat" || scene == "block" || scene == "hud" || scene == "swing" || scene == "parry";
         if (training) zone = "training.json";
+        if (scene == "enemies") zone = "arena.json";
         if (!session_->Load(zone)) {
             ++failures;
             continue;
@@ -277,8 +282,8 @@ int App::PreloadEverything() {
 
 int App::RunSmoke() {
     if (!InitEngine(1280, 720, false)) return 3;
-    if (RunCombatSelfTest(*ctx_) != 0) {
-        LK_ERROR("smoke: combat self-test failed");
+    if (RunCombatSelfTest(*ctx_) + RunEnemySelfTest(*ctx_) != 0) {
+        LK_ERROR("smoke: self-test failed");
         return 1;
     }
     if (PreloadEverything() != 0) return 1;

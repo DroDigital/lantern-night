@@ -5,4 +5,6 @@ namespace lk {
 struct Ctx;
 // Returns the number of failed checks.
 int RunCombatSelfTest(Ctx& ctx);
+// Enemy AI scenarios on data/levels/test_arena.json (tokens, shield, posture, mage, rogue, embers).
+int RunEnemySelfTest(Ctx& ctx);
 }  // namespace lk

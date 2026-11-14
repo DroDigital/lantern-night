@@ -7,6 +7,7 @@
 #include "engine/input.h"
 #include "engine/log.h"
 #include "game/context.h"
+#include "game/game_state.h"
 #include "game/session.h"
 
 namespace lk {
@@ -222,6 +223,144 @@ int RunCombatSelfTest(Ctx& ctx) {
     ctx.input.SetScripted(false);
     LK_INFO("selftest: %d failures", h.failures);
     return h.failures;
+}
+
+// ------------------------------------------------------------------ enemies (M3)
+int RunEnemySelfTest(Ctx& ctx) {
+    Harness h(ctx);
+    ctx.input.SetScripted(true);
+    int failures = 0;
+    auto check = [&](bool ok, const char* what) {
+        if (ok) LK_INFO("selftest: PASS %s", what);
+        else {
+            LK_ERROR("selftest: FAIL %s", what);
+            ++failures;
+        }
+    };
+    auto arena = [&]() {
+        h.s.reset();
+        h.s = std::make_unique<Session>(ctx);
+        bool ok = h.s->Load("test_arena.json");
+        h.s->GetPlayer().Teleport(Vector3{14, 0, 14}, 0.0f);
+        return ok;
+    };
+    if (!arena()) return 1;
+    const bool god = ctx.state.godMode;
+    ctx.state.godMode = true;
+
+    // 1. Attack tokens: five minions around the knight, never more than two attacking at once.
+    for (int i = 0; i < 5; ++i) {
+        float a = float(i) / 5.0f * 2.0f * PI;
+        h.s->SpawnEnemy("minion", Vector3{14 + std::cos(a) * 3.0f, 0, 14 + std::sin(a) * 3.0f}, 0);
+    }
+    int maxAttacking = 0, everAttacked = 0;
+    h.Run(900, [&](int) {
+        int n = 0;
+        for (auto& e : h.s->Enemies())
+            if (e->State() == EState::Attack) ++n;
+        maxAttacking = std::max(maxAttacking, n);
+        everAttacked += n > 0;
+        return InputFrame{};
+    });
+    check(everAttacked > 0, "minions aggro and attack");
+    check(maxAttacking <= 2, "at most 2 enemies attack at once");
+
+    // 2. Warrior shield: light attacks from the front are blocked, heavies go through.
+    arena();
+    Enemy* w = h.s->SpawnEnemy("warrior", Vector3{14, 0, 15.0f}, 180.0f);
+    w->SetFrozenAI(true);
+    h.s->GetPlayer().Teleport(Vector3{14, 0, 14}, 0.0f);
+    h.s->ForceLock(w->Id());
+    float hp0 = w->Hp();
+    h.Step(Harness::Press(Act::Attack));
+    h.Run(40);
+    check(w->Hp() == hp0, "warrior shield blocks a frontal light attack");
+    h.Run(60);
+    h.Step(Harness::Press(Act::Heavy));
+    h.Run(70);
+    check(w->Hp() < hp0, "a heavy attack breaks through the shield");
+
+    // 3. Posture: repeated heavies break the warrior's posture; the next hit is a critical.
+    arena();
+    w = h.s->SpawnEnemy("warrior", Vector3{14, 0, 15.0f}, 180.0f);
+    w->SetFrozenAI(true);
+    h.s->GetPlayer().Teleport(Vector3{14, 0, 14}, 0.0f);
+    h.s->ForceLock(w->Id());
+    bool broke = false;
+    for (int k = 0; k < 6 && !broke; ++k) {
+        h.Step(Harness::Press(Act::Heavy));
+        for (int i = 0; i < 70; ++i) {
+            h.Step({});
+            broke = broke || w->Staggered();
+            h.s->GetPlayer().stamina.value = h.s->GetPlayer().stamina.max;
+        }
+    }
+    check(broke, "heavies fill posture and stagger the warrior");
+    float hpS = w->Hp();
+    h.Step(Harness::Press(Act::Attack));
+    h.Run(40);
+    float dealt = hpS - w->Hp();
+    LK_INFO("selftest: crit check hp %.1f -> %.1f state %s player %s", hpS, w->Hp(), EStateName(w->State()), PStateName(h.s->GetPlayer().State()));
+    check(dealt >= std::min(hpS, h.s->GetPlayer().Weapon().dmgLight * 3) - 0.01f && dealt > 0, "hit on a staggered enemy is a 3x critical");
+
+    // 4. Mage keeps distance with bolts and teleports away when the knight closes in.
+    arena();
+    ctx.state.godMode = false;
+    Enemy* m = h.s->SpawnEnemy("mage", Vector3{14, 0, 6.0f}, 0.0f);
+    h.s->GetPlayer().Teleport(Vector3{14, 0, 14}, 180.0f);
+    bool sawBolt = false;
+    float flame0 = h.s->GetPlayer().flame;
+    h.Run(600, [&](int) {
+        sawBolt = sawBolt || !h.s->Projectiles().empty();
+        return InputFrame{};
+    });
+    check(sawBolt, "mage casts bolts at range");
+    check(h.s->GetPlayer().flame < flame0, "mage bolts hit the knight");
+    ctx.state.godMode = true;
+    Vector3 before = m->Pos();
+    h.s->GetPlayer().Teleport(Vector3Add(m->Pos(), Vector3{0, 0, 1.5f}), 180.0f);
+    bool teleported = false;
+    h.Run(240, [&](int) {
+        teleported = teleported || Vector3Distance(m->Pos(), before) > 4.0f;
+        return InputFrame{};
+    });
+    check(teleported, "mage teleports away when the knight gets close");
+
+    // 5. Rogue: closes distance quickly with its lunge.
+    arena();
+    Enemy* r = h.s->SpawnEnemy("rogue", Vector3{14, 0, 9.0f}, 0.0f);
+    h.s->GetPlayer().Teleport(Vector3{14, 0, 14}, 180.0f);
+    float maxStep = 0;
+    Vector3 last = r->Pos();
+    bool rogueAttacked = false;
+    h.Run(900, [&](int) {
+        maxStep = std::max(maxStep, Vector3Distance(r->Pos(), last) * 60.0f);
+        last = r->Pos();
+        rogueAttacked = rogueAttacked || r->State() == EState::Attack;
+        return InputFrame{};
+    });
+    check(rogueAttacked, "rogue attacks");
+    check(maxStep > 4.0f, "rogue lunge is fast (> 4 m/s)");
+
+    // 6. Kills drop embers.
+    arena();
+    Enemy* mn = h.s->SpawnEnemy("minion", Vector3{14, 0, 15.0f}, 180.0f);
+    h.s->GetPlayer().Teleport(Vector3{14, 0, 14}, 0.0f);
+    h.s->ForceLock(mn->Id());
+    int embers0 = ctx.state.progress.embers;
+    for (int k = 0; k < 8 && mn->Alive(); ++k) {
+        h.Step(Harness::Press(Act::Attack));
+        h.Run(36);
+        h.s->GetPlayer().stamina.value = h.s->GetPlayer().stamina.max;
+    }
+    check(!mn->Alive(), "minion dies");
+    check(ctx.state.progress.embers == embers0 + mn->Def().embers, "dead enemy drops its embers");
+
+    ctx.state.godMode = god;
+    h.s.reset();
+    ctx.input.SetScripted(false);
+    LK_INFO("selftest (enemies): %d failures", failures);
+    return failures;
 }
 
 }  // namespace lk
