@@ -30,8 +30,8 @@ case "$OS" in
     SMOKE_DIR="$BIN/../smoke"
     rm -rf "$SMOKE_DIR"; mkdir -p "$SMOKE_DIR"
     cp "$BIN/LanternKnight.exe" "$SMOKE_DIR/"
-    if [ -n "${MESA_DIR:-}" ] && [ -d "$MESA_DIR/x64" ]; then
-      cp "$MESA_DIR"/x64/*.dll "$SMOKE_DIR/"
+    if [ -n "${MESA_DIR:-}" ] && [ -f "$MESA_DIR/opengl32.dll" ]; then
+      cp "$MESA_DIR"/*.dll "$SMOKE_DIR/"
       echo "Mesa DLLs next to the smoke-test exe:"; ls "$SMOKE_DIR"
     else
       echo "::warning::MESA_DIR not usable: '${MESA_DIR:-}'"

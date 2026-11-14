@@ -67,12 +67,21 @@ jobs:
         run: |
           MESA="$(cygpath -u "$RUNNER_TEMP")/mesa"
           mkdir -p "$MESA" && cd "$MESA"
-          if gh release download --repo pal1000/mesa-dist-win --pattern 'mesa3d-*-release-msvc.7z' --output mesa.7z \
-             && 7z x -y mesa.7z > /dev/null; then
-            ls x64 || true
-            echo "MESA_DIR=$MESA" >> "$GITHUB_ENV"
+          GL=""
+          # Newer mesa-dist-win MSVC builds dropped opengl32.dll; try MinGW, MSVC, then a pinned older release.
+          for spec in "latest|mesa3d-*-release-mingw.7z" "latest|mesa3d-*-release-msvc.7z" "24.3.4|mesa3d-*-release-msvc.7z"; do
+            tag="${spec%%|*}"; pat="${spec##*|}"
+            rm -rf x mesa.7z
+            if [ "$tag" = latest ]; then args=(); else args=("$tag"); fi
+            gh release download "${args[@]}" --repo pal1000/mesa-dist-win --pattern "$pat" --output mesa.7z --clobber || continue
+            7z x -y -ox mesa.7z > /dev/null || continue
+            GL="$(find x -ipath '*x64*' -iname opengl32.dll | head -1)"
+            if [ -n "$GL" ]; then echo "Using $spec: $GL"; break; fi
+          done
+          if [ -n "$GL" ]; then
+            echo "MESA_DIR=$MESA/$(dirname "$GL")" >> "$GITHUB_ENV"
           else
-            echo "::warning::Could not fetch mesa-dist-win"
+            echo "::warning::No mesa-dist-win package with opengl32.dll found"
           fi
 
       - name: Smoke test
