@@ -30,7 +30,7 @@ are also in the pause menu and are saved per user next to the save file:
 | macOS | `~/Library/Application Support/LanternKnight` |
 | Linux | `$XDG_DATA_HOME/lantern-knight` (default `~/.local/share/lantern-knight`) |
 
-Releases are built by CI when a `v*` tag is pushed; the release page carries all three archives.
+Releases are built by CI when a `v*` tag is pushed, or by running the `build` workflow manually with a `release_tag` (it builds all three platforms with that version and creates the tag on the dispatched commit); the release page carries all three archives.
 
 ## Build from source
 

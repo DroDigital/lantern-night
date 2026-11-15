@@ -17,6 +17,10 @@ if(GIT_FOUND)
         endif()
     endif()
 endif()
+# CI release dispatch: the version is given explicitly (-DLK_VERSION_OVERRIDE=0.1.0).
+if(LK_VERSION_OVERRIDE)
+    set(LK_VERSION "${LK_VERSION_OVERRIDE}")
+endif()
 # Numeric part for Info.plist / Windows resources.
 string(REGEX MATCH "^[0-9]+\\.[0-9]+\\.[0-9]+" LK_VERSION_NUMERIC "${LK_VERSION}")
 if(NOT LK_VERSION_NUMERIC)
