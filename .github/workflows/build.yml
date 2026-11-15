@@ -123,3 +123,13 @@ jobs:
         with:
           files: dist/*
           generate_release_notes: true
+          body: |
+            Lantern Knight: a small knight, a dark crypt, and a lantern that is your life.
+
+            | OS | Download | Launch |
+            |---|---|---|
+            | Windows 10+ x64 | `LanternKnight-*-windows-x64.zip` | Unzip, run `LanternKnight.exe` (SmartScreen: *More info* then *Run anyway*). |
+            | macOS 11+ (Apple Silicon and Intel) | `LanternKnight-*-macos-universal.zip` | Unzip, open `Lantern Knight.app` (not notarized: right-click, *Open*). |
+            | Linux x64 | `LanternKnight-*-linux-x64.tar.gz` | `tar xzf` the archive, then run `./LanternKnight` in the extracted folder. |
+
+            No installer or runtime needed. Controls and save locations are in the README.txt inside each archive.
