@@ -84,8 +84,9 @@
 - Audio: every sound referenced by the game exists in `data/audio.json` (checked), menu move/confirm/back sounds, positional SFX, ambient/boss music crossfades, lantern crackle loop at low flame.
 - Particles (built in M1 to M5): lantern embers, hit and block sparks, brazier fire, mage bolt tails, death bursts, ember piles; weapon ribbon trails.
 - Dressing pass: `build_zone.py` adds 57 deterministic props (low clutter along walls, barrels/crates/kegs/trunks in room corners) away from interactables, stairs and the boss arena.
-- Balance pass: the Hollow Warden drops from 1,500 to 1,100 HP (about 70 light hits instead of 94, fewer with Might levels and ripostes); the other numbers held up in the self-tests and captures.
-- Camera: against walls the boom now snaps in to the wall hit (down to 0.15 m) instead of stopping at a 0.6 m floor that let it pass through the wall, and the knight is hidden while the camera is closer than 0.8 m (found while playing the packaged build).
+- Balance pass: the Hollow Warden drops from 1,500 to 1,100 HP (about 70 light hits instead of 94, fewer with Might levels and ripostes); minion hits drop from 12 to 10 because the first room sends up to three at a fresh knight (playing it, mashing attack died twice; blocking and countering got through with flame to spare).
+- Camera (found while playing the packaged build): against walls the boom snaps in to the wall hit instead of stopping at a 0.6 m floor that let it pass through the wall; the squeeze tilt now picks whichever boom (level or tilted) is clearer; when the knight backs into a wall so neither clears, the camera rises over his head and looks down; the knight is hidden only when the camera is within 0.8 m of him.
+- Soft aim: without lock-on, an attack turns toward the closest enemy within 2.6 m and 70 degrees of the stick (or the knight's facing); `soft_aim` in `data/player/stats.json`.
 - App icons (Windows .ico in the exe, macOS .icns in the bundle, Linux .png + .desktop), README with download and launch steps per OS, `v0.1.0` tag with a GitHub Release carrying the Windows, macOS and Linux archives.
 
 ### Known issues

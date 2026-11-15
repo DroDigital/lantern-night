@@ -77,34 +77,44 @@ void CameraRig::Update(float dt, Vector3 followPos, Vector2 look, const Vector3*
     Vector3 basePivot = pivot_;
     pivot_ = Vector3Add(pivot_, side);
     float dist = lockTarget ? tuning.lockonDistance + big * 1.6f : tuning.distance;
-    float want = dist;
-    if (physics) {
-        Vector3 far = Vector3Add(pivot_, Vector3Scale(back, dist));
-        RayHit h = physics->SphereCast(basePivot, far, tuning.collisionRadius);
-        if (h.hit) want = std::max(tuning.minDistance, dist * h.fraction - 0.05f);
-    }
-    // Pull in to a wall at once (never render from inside it); ease back out.
-    if (dt <= 0 || want < curDist_) curDist_ = want;
-    else curDist_ += (want - curDist_) * Damp(tuning.collisionOut, dt);
-
+    // Longest clear boom along a direction (sphere cast from the pivot).
+    auto clearDist = [&](Vector3 dir) {
+        if (!physics) return dist;
+        RayHit h = physics->SphereCast(basePivot, Vector3Add(pivot_, Vector3Scale(dir, dist)), tuning.collisionRadius);
+        return h.hit ? std::max(tuning.minDistance, dist * h.fraction - 0.05f) : dist;
+    };
+    float want = clearDist(back);
     // Squeezed against a wall: tilt up and look over the knight instead of hugging their back.
-    float squeeze = std::clamp((dist - curDist_) / std::max(dist, 0.01f), 0.0f, 1.0f);
+    float squeeze = std::clamp((dist - want) / std::max(dist, 0.01f), 0.0f, 1.0f);
     squeeze_ += (squeeze - squeeze_) * (dt > 0 ? Damp(5.0f, dt) : 1.0f);
     if (squeeze_ > 0.01f) {
         float p2 = std::min(pitch_ + squeeze_ * 40.0f * DEG2RAD, 75.0f * DEG2RAD);
         Vector3 back2{std::sin(yaw_) * std::cos(p2), std::sin(p2), std::cos(yaw_) * std::cos(p2)};
-        float d2 = dist;
-        if (physics) {
-            RayHit h2 = physics->SphereCast(basePivot, Vector3Add(pivot_, Vector3Scale(back2, dist)), tuning.collisionRadius);
-            if (h2.hit) d2 = std::max(tuning.minDistance, dist * h2.fraction - 0.05f);
-        }
-        if (d2 > curDist_) {
+        float want2 = clearDist(back2);
+        if (want2 > want) {
             back = back2;
-            curDist_ += (d2 - curDist_) * (dt > 0 ? Damp(tuning.collisionOut * 2.0f, dt) : 1.0f);
+            want = want2;
         }
     }
+    // Pull in to a wall at once (never render from inside it); ease back out.
+    if (dt <= 0 || want < curDist_) curDist_ = want;
+    else curDist_ += (want - curDist_) * Damp(tuning.collisionOut, dt);
     Vector3 pos = Vector3Add(pivot_, Vector3Scale(back, curDist_));
     Vector3 target = pivot_;
+    // Backed into a wall so the boom cannot clear it at any tilt: rise over the knight's head and
+    // look down at them (the crypt has no ceilings), blending in so it does not pop.
+    float overhead = 0.0f;
+    if (physics && curDist_ < tuning.hideKnightBelow * 1.5f) {
+        float up = dist * 0.8f;
+        RayHit hu = physics->SphereCast(basePivot, Vector3Add(basePivot, Vector3{0, up, 0}), tuning.collisionRadius);
+        if (hu.hit) up *= hu.fraction;
+        overhead = std::clamp((up - 1.0f) / 1.5f, 0.0f, 1.0f);
+        if (overhead > 0) overhead *= std::clamp(1.0f - (curDist_ - tuning.hideKnightBelow) / (tuning.hideKnightBelow * 0.5f), 0.0f, 1.0f);
+        overheadPos_ = Vector3Add(basePivot, Vector3{std::sin(yaw_) * 0.12f, up, std::cos(yaw_) * 0.12f});
+    }
+    overhead_ += (overhead - overhead_) * (dt > 0 ? Damp(6.0f, dt) : 1.0f);
+    if (overhead_ > 0.01f) pos = Vector3Lerp(pos, overheadPos_, overhead_);
+    boom_ = Vector3Distance(pos, pivot_);
     if (lockTarget) target = Vector3Lerp(pivot_, *lockTarget, big > 0 ? 0.35f : 0.25f);
 
     shakeTime_ += dt;

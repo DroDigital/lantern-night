@@ -572,6 +572,27 @@ void Session::Step(const InputFrame& in, float dt) {
     pe.camForward = cam_.Forward();
     pe.camRight = cam_.Right();
     pe.lockTarget = lock ? &lockPt : nullptr;
+    // Soft aim: without lock-on, attacks turn toward the closest enemy in front of the knight
+    // (or in the direction the stick is pushed).
+    Vector3 softPt{};
+    if (!lock) {
+        const PlayerTuning& pt = player_.Tuning();
+        Vector3 fwd = player_.Facing();
+        Vector2 mv = pin.move;
+        if (mv.x * mv.x + mv.y * mv.y > 0.1f)
+            fwd = Vector3Add(Vector3Scale(cam_.Right(), mv.x), Vector3Scale(cam_.Forward(), mv.y));
+        float best = pt.softAimRange;
+        for (auto& e : enemies_) {
+            if (!e->Lockable()) continue;
+            Vector3 to = Vector3Subtract(e->Pos(), player_.Pos());
+            float d = std::sqrt(to.x * to.x + to.z * to.z);
+            if (d < best && geom::WithinArc(G(fwd), G(to), pt.softAimAngle)) {
+                best = d;
+                softPt = e->Pos();
+                pe.softTarget = &softPt;
+            }
+        }
+    }
     pe.godMode = ctx_.state.godMode;
     pe.time = simTime_;
     // Riposte: a staggered enemy right in front of the knight.

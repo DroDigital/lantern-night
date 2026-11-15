@@ -36,6 +36,7 @@ struct PlayerTuning {
     int flaskStart = 3, flaskMaxShards = 5;
     float interactRange = 1.6f, invulnAfterHit = 0.25f;
     float lockRange = 14, lockLostTime = 2, lockMaxAngle = 75;
+    float softAimRange = 2.6f, softAimAngle = 70;   // unlocked attacks turn toward a close enemy in front
     void Load(const json& j);
 };
 
@@ -59,6 +60,7 @@ const char* PStateName(PState s);
 struct PlayerEnv {
     Vector3 camForward{0, 0, -1}, camRight{1, 0, 0};
     const Vector3* lockTarget = nullptr;
+    const Vector3* softTarget = nullptr;   // nearest enemy in the soft-aim cone (no lock-on)
     bool godMode = false;
     bool riposteReady = false;   // a staggered enemy is in front and in reach
     float time = 0;

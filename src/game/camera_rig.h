@@ -29,7 +29,7 @@ public:
 
     Camera3D Cam() const { return cam_; }
     float Yaw() const { return yaw_; }
-    float Distance() const { return curDist_; }   // current boom length (shrinks against walls)
+    float Distance() const { return boom_; }   // camera to pivot this frame (shrinks against walls)
     // Camera-relative basis on the ground plane.
     Vector3 Forward() const;
     Vector3 Right() const;
@@ -45,6 +45,8 @@ private:
     float shake_ = 0.0f, shakeTime_ = 0.0f;
     float shoulder_ = 0.0f;
     float squeeze_ = 0.0f;
+    float overhead_ = 0.0f, boom_ = 4.5f;
+    Vector3 overheadPos_{};
     bool shakeEnabled_ = true;
 };
 

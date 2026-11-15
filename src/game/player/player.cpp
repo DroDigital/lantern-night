@@ -118,6 +118,10 @@ void PlayerTuning::Load(const json& j) {
         lockLostTime = j["lockon"].value("lost_time", lockLostTime);
         lockMaxAngle = j["lockon"].value("max_angle_deg", lockMaxAngle);
     }
+    if (j.contains("soft_aim")) {
+        softAimRange = j["soft_aim"].value("range", softAimRange);
+        softAimAngle = j["soft_aim"].value("angle_deg", softAimAngle);
+    }
 }
 
 bool WeaponDef::Load(const std::string& k, const json& j) {
@@ -330,8 +334,8 @@ void Player::StartAttack(AttackKind k, int combo, const PlayerEnv& env, FxQueue&
     heavyHeld_ = k == AttackKind::Heavy;
     lungeLeft_ = k == AttackKind::Heavy ? tune_.lungeHeavy : (k == AttackKind::Riposte ? tune_.lungeRiposte : tune_.lungeLight);
     // Snap toward the lock target (or keep facing) at the start of the swing.
-    if (env.lockTarget) {
-        Vector3 to = Vector3Subtract(*env.lockTarget, pos_);
+    if (const Vector3* aim = env.lockTarget ? env.lockTarget : env.softTarget) {
+        Vector3 to = Vector3Subtract(*aim, pos_);
         yaw_ = std::atan2(to.x, to.z);
     }
     swing_.Stop();
