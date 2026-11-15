@@ -16,6 +16,7 @@
 #include "game/selftest.h"
 #include "game/smoke_bot.h"
 #include "game/world/zone_editor.h"
+#include "game/ui/menus.h"
 #include "rlgl.h"
 
 namespace fs = std::filesystem;
@@ -50,7 +51,9 @@ bool App::InitEngine(int w, int h, bool hidden) {
     if (!opt_.smokeTest && opt_.captureScene.empty()) audio_.Init(data_.Get("audio.json"));
     else if (opt_.smokeTest) audio_.Init(data_.Get("audio.json"));  // still load every sound
     ui_.Init(assets_);
-    ctx_ = std::make_unique<Ctx>(Ctx{data_, assets_, renderer_, physics_, input_, audio_, save_, state_, ui_});
+    ctx_ = std::make_unique<Ctx>(Ctx{data_, assets_, renderer_, physics_, input_, audio_, save_, state_, ui_, settings_});
+    settings_.Load();
+    settings_.ApplyRuntime(audio_, input_, renderer_);
     engineReady_ = true;
     return true;
 }
@@ -100,11 +103,79 @@ void App::RenderFrame(float alpha) {
     EndDrawing();
 }
 
+bool App::TitleScreen() {
+    // Background: the zone at the spawn, seen from a slow orbit. Returns false to quit.
+    enum class Page { Main, Settings } page = Page::Main;
+    float t = 0;
+    Camera3D cam{};
+    EnableCursor();
+    ui_.ResetFocus();
+    audio_.PlayMusic("ambient", 3.0f);
+    while (!WindowShouldClose()) {
+        float dt = std::min(GetFrameTime(), 0.1f);
+        t += dt;
+        input_.Poll(dt, false);
+        Vector3 c = session_->PlayerPos();
+        float a = t * 0.06f;
+        cam.position = Vector3{c.x + std::sin(a) * 7.0f, c.y + 3.6f, c.z + std::cos(a) * 7.0f};
+        cam.target = Vector3{c.x, c.y + 0.9f, c.z};
+        cam.up = {0, 1, 0};
+        cam.fovy = 50;
+        cam.projection = CAMERA_PERSPECTIVE;
+        session_->SetCameraOverride(&cam);
+        session_->SetHudVisible(false);
+        audio_.Update(dt);
+        BeginDrawing();
+        ClearBackground(BLACK);
+        ui_.Begin(GetScreenWidth(), GetScreenHeight(), input_.ConsumeStep(), input_.LastDevice(), input_.Family());
+        session_->Render(1.0f, GetScreenWidth(), GetScreenHeight());
+        MenuAction act = MenuAction::None;
+        if (page == Page::Main) {
+            act = DrawTitleMenu(ui_, save_.Exists(), LK_VERSION, t);
+        } else {
+            bool changed = false;
+            if (DrawSettingsMenu(ui_, settings_, changed) == MenuAction::Close) {
+                page = Page::Main;
+                ui_.ResetFocus();
+            }
+            if (changed) {
+                settings_.ApplyRuntime(audio_, input_, renderer_);
+                settings_.ApplyWindow();
+                settings_.Save();
+            }
+        }
+        if (ui_.MovedFocus()) audio_.Play("ui_move");
+        EndDrawing();
+        if (IsWindowResized()) renderer_.Resize(GetRenderWidth(), GetRenderHeight());
+        if (act == MenuAction::Settings) {
+            page = Page::Settings;
+            ui_.ResetFocus();
+        }
+        if (act == MenuAction::QuitToDesktop) return false;
+        if (act == MenuAction::Continue || act == MenuAction::NewGame) {
+            audio_.Play("ui_confirm");
+            if (act == MenuAction::NewGame) {
+                save_.Delete();
+                state_.ResetProgress();
+            }
+            session_ = std::make_unique<Session>(*ctx_);
+            return session_->Load(opt_.zone);
+        }
+    }
+    return false;
+}
+
 int App::RunInteractive() {
-    if (!InitEngine(opt_.width, opt_.height, false)) return 3;
+    settings_.Load();
+    const Resolution& res = kResolutions[settings_.resolution];
+    int w = opt_.windowedOverride ? opt_.width : res.w, h = opt_.windowedOverride ? opt_.height : res.h;
+    if (!InitEngine(w, h, false)) return 3;
+    settings_.ApplyWindow();
+    settings_.ApplyRuntime(audio_, input_, renderer_);
     if (save_.Load(state_.progress)) LK_INFO("loaded save from %s", save_.Path().c_str());
     session_ = std::make_unique<Session>(*ctx_);
     if (!session_->Load(opt_.zone)) return 1;
+    if (!TitleScreen()) return 0;
     DisableCursor();
     bool cursorFree = false;
 #if defined(LK_DEBUG_TOOLS)
@@ -222,23 +293,52 @@ int App::RunCapture() {
     if (!InitEngine(1920, 1080, false)) return 3;
     std::error_code ec;
     fs::create_directories(opt_.captureOut, ec);
+    // Menu-only shots (title screen and settings page over the game).
+    auto menuShot = [&](const std::string& name, const std::string& zone, bool title) {
+        settings_.Load();
+        session_ = std::make_unique<Session>(*ctx_);
+        session_->Load(zone);
+        Camera3D cam{};
+        Vector3 c = session_->PlayerPos();
+        cam.position = Vector3{c.x + 4.0f, c.y + 3.6f, c.z + 5.5f};
+        cam.target = Vector3{c.x, c.y + 0.9f, c.z};
+        cam.up = {0, 1, 0};
+        cam.fovy = 50;
+        cam.projection = CAMERA_PERSPECTIVE;
+        session_->SetCameraOverride(&cam);
+        session_->SetHudVisible(false);
+        for (int f = 0; f < 3; ++f) {
+            BeginDrawing();
+            ClearBackground(BLACK);
+            ui_.Begin(GetScreenWidth(), GetScreenHeight(), InputFrame{}, title ? Device::Gamepad : Device::KeyboardMouse,
+                      PadFamily::Xbox);
+            session_->Render(1.0f, GetScreenWidth(), GetScreenHeight());
+            bool changed = false;
+            if (title) DrawTitleMenu(ui_, true, LK_VERSION, 1.0f);
+            else DrawSettingsMenu(ui_, settings_, changed);
+            if (f == 2) SaveScreenshot((fs::path(opt_.captureOut) / (name + ".png")).string());
+            EndDrawing();
+        }
+        session_->SetCameraOverride(nullptr);
+        session_.reset();
+    };
+    if (opt_.captureScene == "title" || opt_.captureScene == "settings" || opt_.captureScene == "all" ||
+        opt_.captureScene == "menus") {
+        if (opt_.captureScene != "settings") menuShot("title", opt_.zone, true);
+        if (opt_.captureScene != "title") menuShot("settings", "training.json", false);
+        if (opt_.captureScene != "all") return log::ErrorCount() == 0 ? 0 : 1;
+    }
     std::vector<std::string> scenes;
     if (opt_.captureScene == "all")
         scenes = {"lighting_full", "lighting_half", "lighting_low", "zone_overview", "combat", "swing", "parry", "hud", "shrine_menu", "death", "enemies", "boss_phase1", "boss_phase2", "victory"};
-    if (opt_.captureScene == "all" || opt_.captureScene == "areas")
-        for (auto& [name, shot] : data_.Get("capture.json")["shots"].items()) {
-            (void)shot;
-            if (opt_.captureScene == "areas") scenes.clear();
-            scenes.push_back(name);
-        }
-    if (opt_.captureScene == "areas") {
-        scenes.clear();
+    if (opt_.captureScene == "all" || opt_.captureScene == "areas") {
         for (auto& [name, shot] : data_.Get("capture.json")["shots"].items()) {
             (void)shot;
             scenes.push_back(name);
         }
+    } else {
+        scenes = {opt_.captureScene};
     }
-    else scenes = {opt_.captureScene};
     input_.SetScripted(true);
     int failures = 0;
     for (const auto& scene : scenes) {

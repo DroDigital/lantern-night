@@ -8,7 +8,9 @@
 
 namespace lk {
 
-enum class MenuAction { None, Close, LevelVigor, LevelEndurance, LevelMight, SwapWeapon, Resume, Settings, QuitToDesktop };
+enum class MenuAction { None, Close, LevelVigor, LevelEndurance, LevelMight, SwapWeapon, Resume, Settings, QuitToDesktop, Continue, NewGame };
+
+struct Settings;
 
 struct ShrineMenuState {
     enum class Page { Main, LevelUp } page = Page::Main;
@@ -18,5 +20,8 @@ struct ShrineMenuState {
 MenuAction DrawShrineMenu(Ui& ui, ShrineMenuState& st, const SaveData& save, const json& leveling, bool hasGreataxe,
                           const std::string& weaponName);
 MenuAction DrawPauseMenu(Ui& ui);
+// Settings page; `changed` is set when a value changed (caller applies and saves).
+MenuAction DrawSettingsMenu(Ui& ui, Settings& s, bool& changed);
+MenuAction DrawTitleMenu(Ui& ui, bool hasSave, const std::string& version, float time);
 
 }  // namespace lk

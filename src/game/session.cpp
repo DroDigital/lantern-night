@@ -11,6 +11,7 @@
 #include "engine/physics.h"
 #include "engine/ui.h"
 #include "game/game_state.h"
+#include "game/settings.h"
 #include "rlgl.h"
 
 namespace lk {
@@ -637,6 +638,7 @@ void Session::Step(const InputFrame& in, float dt) {
 
     lock = LockTarget();
     lockPt = lock ? lock->LockPoint() : Vector3{};
+    cam_.SetShakeEnabled(ctx_.settings.cameraShake);
     float lockH = lock ? lock->Def().height * lock->Scale() * 0.5f * 2.0f : 1.2f;
     cam_.Update(dt, player_.Pos(), pin.look, lock ? &lockPt : nullptr, &ctx_.physics, lockH);
     // Ember pile sparkles.
@@ -669,6 +671,20 @@ void Session::Render(float alpha, int sw, int sh) {
 
     Camera3D cam = camOverride_ ? *camOverride_ : cam_.Cam();
     Renderer& r = ctx_.renderer;
+    if (r.Settings().lanternShadows) {
+        // Lantern shadow cube: casters within the lantern's reach.
+        const PointLight& L = lights[0];
+        r.BeginShadowPass(L.pos, L.range);
+        if (r.ShadowsReady())
+            for (int face = 0; face < 6; ++face) {
+                r.BeginShadowFace(face);
+                world_.Draw(r, L.pos, L.range);  // the knight himself does not cast: he holds the light
+                for (const auto& e : enemies_)
+                    if (Vector3Distance(e->Pos(), L.pos) < L.range + 2.0f) e->Draw(r, alpha, realTime_);
+                r.EndShadowFace();
+            }
+        r.EndShadowPass();
+    }
     r.SetTime(realTime_);
     r.BeginScene(cam);
     world_.Draw(r, cam.position, drawDistance_);

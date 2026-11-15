@@ -26,6 +26,23 @@ uniform float minLight;
 uniform float lightFalloff;
 uniform float opacity;
 uniform float time;
+uniform samplerCube shadowCube;
+uniform int shadowEnabled;
+uniform float shadowFar;
+
+float LanternShadow(vec3 lightPos) {
+    vec3 d = fragPosition - lightPos;
+    float cur = length(d);
+    float bias = 0.04 + cur * 0.012;
+    float lit = 0.0;
+    vec3 offs[4] = vec3[](vec3(0.6, 0.6, 0.6), vec3(-0.6, -0.6, 0.6), vec3(-0.6, 0.6, -0.6), vec3(0.6, -0.6, -0.6));
+    float r = 0.012 * cur;
+    for (int k = 0; k < 4; ++k) {
+        float closest = texture(shadowCube, d + offs[k] * r).r * shadowFar;
+        lit += (cur - bias > closest) ? 0.0 : 1.0;
+    }
+    return mix(0.18, 1.0, lit * 0.25);
+}
 out vec4 finalColor;
 
 void main() {
@@ -51,6 +68,7 @@ void main() {
         float att = (x * x) / (1.0 + lightFalloff * d * d);
         // wrapped diffuse keeps the chunky shapes soft and readable
         float ndl = clamp(dot(N, L) * 0.7 + 0.3, 0.0, 1.0);
+        if (i == 0 && shadowEnabled == 1) att *= LanternShadow(lightPos[0]);
         light += lightColor[i] * att * ndl;
         if (opacity < 0.99) {
             // Water: sharp glints of the lights, gently rippled.

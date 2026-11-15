@@ -13,6 +13,7 @@
 #include "engine/renderer.h"
 #include "engine/ui.h"
 #include "game/context.h"
+#include "game/settings.h"
 
 namespace lk {
 
@@ -47,6 +48,7 @@ private:
     bool InitEngine(int w, int h, bool hidden);
     void ShutdownEngine();
     int RunInteractive();
+    bool TitleScreen();
     int RunCapture();
     int RunSmoke();
     int RunAnimReport();
@@ -66,6 +68,7 @@ private:
     Physics physics_;
     Input input_;
     Ui ui_;
+    Settings settings_;
     std::unique_ptr<Ctx> ctx_;
     std::unique_ptr<Session> session_;
     bool engineReady_ = false;

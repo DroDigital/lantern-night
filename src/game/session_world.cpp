@@ -11,6 +11,7 @@
 #include "game/game_state.h"
 #include "game/save_system.h"
 #include "game/session.h"
+#include "game/settings.h"
 
 namespace lk {
 
@@ -263,9 +264,28 @@ void Session::RenderMenus() {
     } else if (menu_ == Menu::Pause) {
         MenuAction a = DrawPauseMenu(ui);
         if (a == MenuAction::Resume) menu_ = Menu::None;
+        if (a == MenuAction::Settings) {
+            menu_ = Menu::Settings;
+            ui.ResetFocus();
+        }
         if (a == MenuAction::QuitToDesktop) {
             SaveProgress();
             wantsQuit_ = true;
+        }
+        if (ui.MovedFocus()) ctx_.audio.Play("ui_move");
+    }
+    if (menu_ == Menu::Settings) {
+        bool changed = false;
+        MenuAction a = DrawSettingsMenu(ui, ctx_.settings, changed);
+        if (changed) {
+            ctx_.settings.ApplyRuntime(ctx_.audio, ctx_.input, ctx_.renderer);
+            ctx_.settings.ApplyWindow();
+            ctx_.settings.Save();
+            ctx_.audio.Play("ui_move");
+        }
+        if (a == MenuAction::Close) {
+            menu_ = Menu::Pause;
+            ui.ResetFocus();
         }
         if (ui.MovedFocus()) ctx_.audio.Play("ui_move");
     }

@@ -204,7 +204,7 @@ private:
     int nextEnemyId_ = 1;
     float emberFlash_ = 0;
     // Shrines, death, menus
-    enum class Menu { None, Shrine, Pause, Credits };
+    enum class Menu { None, Shrine, Pause, Credits, Settings };
     Menu menu_ = Menu::None;
     ShrineMenuState shrineMenu_;
     std::vector<Shrine> shrines_;

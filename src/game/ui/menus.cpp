@@ -1,6 +1,10 @@
 #include "game/ui/menus.h"
 
+#include <algorithm>
+#include <cmath>
+
 #include "core/combat_rules.h"
+#include "game/settings.h"
 
 namespace lk {
 
@@ -61,6 +65,86 @@ MenuAction DrawPauseMenu(Ui& ui) {
     if (ui.Button("Settings", {x + 40, by, w - 80, 70})) act = MenuAction::Settings;
     by += 88;
     if (ui.Button("Save and quit", {x + 40, by, w - 80, 70})) act = MenuAction::QuitToDesktop;
+    return act;
+}
+
+MenuAction DrawSettingsMenu(Ui& ui, Settings& s, bool& changed) {
+    MenuAction act = MenuAction::None;
+    ui.Rect({0, 0, ui.W(), ui.H()}, Color{0, 0, 0, 150});
+    float w = 900, x = (ui.W() - w) * 0.5f, y = ui.H() * 0.5f - 470;
+    ui.Panel({x, y, w, 940});
+    ui.Text("Settings", ui.W() * 0.5f, y + 30, 48, Color{255, 210, 150, 255}, Align::Center);
+    float ry = y + 110, rh = 62, gap = 68;
+    auto pct = [](float v) { return std::to_string(int(std::lround(v * 100))) + "%"; };
+    auto vol = [&](const char* label, float& v) {
+        int d = ui.Stepper(label, pct(v), {x + 40, ry, w - 80, rh});
+        if (d) {
+            v = std::clamp(v + 0.1f * float(d), 0.0f, 1.0f);
+            changed = true;
+        }
+        ry += gap;
+    };
+    auto toggle = [&](const char* label, bool& v) {
+        if (ui.Stepper(label, v ? "On" : "Off", {x + 40, ry, w - 80, rh})) {
+            v = !v;
+            changed = true;
+        }
+        ry += gap;
+    };
+    vol("Master volume", s.master);
+    vol("Music volume", s.music);
+    vol("Effects volume", s.sfx);
+    toggle("Camera shake", s.cameraShake);
+    {
+        char buf[16];
+        std::snprintf(buf, sizeof buf, "%.1f", s.sensitivity);
+        int d = ui.Stepper("Camera sensitivity", buf, {x + 40, ry, w - 80, rh});
+        if (d) {
+            s.sensitivity = std::clamp(s.sensitivity + 0.1f * float(d), 0.2f, 3.0f);
+            changed = true;
+        }
+        ry += gap;
+    }
+    toggle("Invert camera X", s.invertX);
+    toggle("Invert camera Y", s.invertY);
+    {
+        if (ui.Stepper("Display", s.fullscreen ? "Fullscreen" : "Windowed", {x + 40, ry, w - 80, rh})) {
+            s.fullscreen = !s.fullscreen;
+            changed = true;
+        }
+        ry += gap;
+    }
+    {
+        int d = ui.Stepper("Resolution", kResolutions[s.resolution].label, {x + 40, ry, w - 80, rh});
+        if (d) {
+            s.resolution = (s.resolution + d + kResolutionCount) % kResolutionCount;
+            changed = true;
+        }
+        ry += gap;
+    }
+    toggle("Vertical sync", s.vsync);
+    toggle("Lantern shadows", s.lanternShadows);
+    if (ui.Button("Back", {x + 40, ry + 6, w - 80, 64}) || ui.BackPressed()) act = MenuAction::Close;
+    return act;
+}
+
+MenuAction DrawTitleMenu(Ui& ui, bool hasSave, const std::string& version, float time) {
+    MenuAction act = MenuAction::None;
+    float cx = ui.W() * 0.5f;
+    float glow = 0.85f + 0.15f * std::sin(time * 2.0f);
+    ui.Text("LANTERN KNIGHT", cx, ui.H() * 0.18f, 110, Color{255, (unsigned char)(170 * glow + 40), 90, 255}, Align::Center);
+    ui.Text("a small knight, a dark crypt, a lantern that is your life", cx, ui.H() * 0.18f + 130, 28, Color{220, 210, 200, 220},
+            Align::Center);
+    float w = 520, x = cx - w * 0.5f, y = ui.H() * 0.50f;
+    if (hasSave && ui.Button("Continue", {x, y, w, 72})) act = MenuAction::Continue;
+    if (hasSave) y += 88;
+    if (ui.Button("New game", {x, y, w, 72})) act = MenuAction::NewGame;
+    y += 88;
+    if (ui.Button("Settings", {x, y, w, 72})) act = MenuAction::Settings;
+    y += 88;
+    if (ui.Button("Quit", {x, y, w, 72})) act = MenuAction::QuitToDesktop;
+    ui.Text("v" + version, ui.W() - 40, ui.H() - 60, 26, Color{200, 195, 190, 200}, Align::Right);
+    ui.Prompt(Act::Confirm, "Select", 40, ui.H() - 76, 44);
     return act;
 }
 

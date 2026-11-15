@@ -29,6 +29,36 @@ using PFN_BindRenderbuffer = void(LK_GLAPI*)(unsigned, unsigned);
 using PFN_RenderbufferStorageMultisample = void(LK_GLAPI*)(unsigned, int, unsigned, int, int);
 using PFN_DeleteRenderbuffers = void(LK_GLAPI*)(int, const unsigned*);
 
+using PFN_GenTextures = void(LK_GLAPI*)(int, unsigned*);
+using PFN_BindTexture = void(LK_GLAPI*)(unsigned, unsigned);
+using PFN_TexImage2D = void(LK_GLAPI*)(unsigned, int, int, int, int, int, unsigned, unsigned, const void*);
+using PFN_TexParameteri = void(LK_GLAPI*)(unsigned, unsigned, int);
+PFN_GenTextures glGenTextures_ = nullptr;
+PFN_BindTexture glBindTexture_ = nullptr;
+PFN_TexImage2D glTexImage2D_ = nullptr;
+PFN_TexParameteri glTexParameteri_ = nullptr;
+
+// R32F cube map (raylib's rlLoadTextureCubemap rejects float formats on some drivers).
+unsigned CreateFloatCubemap(int size) {
+    if (!glGenTextures_) {
+        glGenTextures_ = reinterpret_cast<PFN_GenTextures>(rlGetProcAddress("glGenTextures"));
+        glBindTexture_ = reinterpret_cast<PFN_BindTexture>(rlGetProcAddress("glBindTexture"));
+        glTexImage2D_ = reinterpret_cast<PFN_TexImage2D>(rlGetProcAddress("glTexImage2D"));
+        glTexParameteri_ = reinterpret_cast<PFN_TexParameteri>(rlGetProcAddress("glTexParameteri"));
+    }
+    if (!glGenTextures_ || !glBindTexture_ || !glTexImage2D_ || !glTexParameteri_) return 0;
+    constexpr unsigned kCube = 0x8513, kPosX = 0x8515, kR32F = 0x822E, kRed = 0x1903, kFloat = 0x1406;
+    unsigned id = 0;
+    glGenTextures_(1, &id);
+    glBindTexture_(kCube, id);
+    for (unsigned f = 0; f < 6; ++f) glTexImage2D_(kPosX + f, 0, int(kR32F), size, size, 0, kRed, kFloat, nullptr);
+    glTexParameteri_(kCube, 0x2801, 0x2601);  // MIN_FILTER = LINEAR
+    glTexParameteri_(kCube, 0x2800, 0x2601);  // MAG_FILTER = LINEAR
+    for (unsigned w : {0x2802u, 0x2803u, 0x8072u}) glTexParameteri_(kCube, w, 0x812F);  // CLAMP_TO_EDGE
+    glBindTexture_(kCube, 0);
+    return id;
+}
+
 PFN_GenRenderbuffers glGenRenderbuffers_ = nullptr;
 PFN_BindRenderbuffer glBindRenderbuffer_ = nullptr;
 PFN_RenderbufferStorageMultisample glRenderbufferStorageMultisample_ = nullptr;
@@ -136,12 +166,24 @@ bool Renderer::ReloadShaders() {
     Shader bright = LoadShaderChecked("", "bright.fs");
     Shader blur = LoadShaderChecked("", "blur.fs");
     Shader comp = LoadShaderChecked("", "composite.fs");
+    Shader sh0 = LoadShaderChecked("lit_static.vs", "shadow.fs");
+    Shader sh1 = LoadShaderChecked("lit_skinned.vs", "shadow.fs");
     unsigned def = rlGetShaderIdDefault();
     bool ok = fresh[0].id != def && fresh[1].id != def && add.id != def && shaft.id != def && bright.id != def &&
-              blur.id != def && comp.id != def;
+              blur.id != def && comp.id != def && sh0.id != def && sh1.id != def;
     if (!ok) return false;
-    for (auto* s : {&lit_[0], &lit_[1], &additive_, &shaft_, &bright_, &blur_, &composite_})
+    for (auto* s : {&lit_[0], &lit_[1], &additive_, &shaft_, &bright_, &blur_, &composite_, &shadow_[0], &shadow_[1]})
         if (s->id != 0 && s->id != def) UnloadShader(*s);
+    shadow_[0] = sh0;
+    shadow_[1] = sh1;
+    for (int i = 0; i < 2; ++i) {
+        shadowLocLight_[i] = GetShaderLocation(shadow_[i], "shadowLightPos");
+        shadowLocFar_[i] = GetShaderLocation(shadow_[i], "shadowFar");
+        shadow_[i].locs[SHADER_LOC_MATRIX_MODEL] = GetShaderLocation(shadow_[i], "matModel");
+        shadow_[i].locs[SHADER_LOC_MATRIX_NORMAL] = GetShaderLocation(shadow_[i], "matNormal");
+    }
+    shadowLocBones_ = GetShaderLocation(shadow_[1], "boneMatrices");
+    shadow_[1].locs[SHADER_LOC_MATRIX_BONETRANSFORMS] = shadowLocBones_;
     lit_[0] = fresh[0];
     lit_[1] = fresh[1];
     additive_ = add;
@@ -174,6 +216,9 @@ bool Renderer::ReloadShaders() {
         s.locs[SHADER_LOC_MATRIX_MODEL] = GetShaderLocation(s, "matModel");
         s.locs[SHADER_LOC_MATRIX_NORMAL] = GetShaderLocation(s, "matNormal");
         if (i == 1) s.locs[SHADER_LOC_MATRIX_BONETRANSFORMS] = l.boneMatrices;
+        litShadowCube_[i] = GetShaderLocation(s, "shadowCube");
+        litShadowOn_[i] = GetShaderLocation(s, "shadowEnabled");
+        litShadowFar_[i] = GetShaderLocation(s, "shadowFar");
     }
     addIntensityLoc_ = GetShaderLocation(additive_, "intensity");
     shaftIntensityLoc_ = GetShaderLocation(shaft_, "intensity");
@@ -228,6 +273,7 @@ void Renderer::Resize(int w, int h) {
 
 void Renderer::Shutdown() {
     DestroyTargets();
+    DestroyShadowTargets();
     for (auto* s : {&lit_[0], &lit_[1], &additive_, &shaft_, &bright_, &blur_, &composite_})
         if (s->id) UnloadShader(*s);
     if (radial_.id) UnloadTexture(radial_);
@@ -254,6 +300,11 @@ void Renderer::SetFrameUniforms(int which) {
     SetShaderValue(s, l.time, &time_, SHADER_UNIFORM_FLOAT);
     float one = 1.0f;
     SetShaderValue(s, l.opacity, &one, SHADER_UNIFORM_FLOAT);
+    int on = (settings_.lanternShadows && shadowValid_) ? 1 : 0;
+    int slot = 15;
+    SetShaderValue(s, litShadowOn_[which], &on, SHADER_UNIFORM_INT);
+    SetShaderValue(s, litShadowCube_[which], &slot, SHADER_UNIFORM_INT);
+    SetShaderValue(s, litShadowFar_[which], &shadowFar_, SHADER_UNIFORM_FLOAT);
 }
 
 void Renderer::BindLights(int which, Vector3 probe) {
@@ -312,10 +363,36 @@ void Renderer::BeginScene(const Camera3D& cam) {
     BeginMode3D(cam);
     SetFrameUniforms(0);
     SetFrameUniforms(1);
+    if (settings_.lanternShadows && shadowValid_) {
+        rlActiveTextureSlot(15);
+        rlEnableTextureCubemap(shadowCube_);
+        rlActiveTextureSlot(0);
+    }
 }
 
 void Renderer::DrawModel(const ModelAsset& asset, const Matrix& world, const Animator* anim, const DrawParams& p) {
     int which = asset.skinned ? 1 : 0;
+    if (inShadow_) {
+        Shader& ss = shadow_[which];
+        if (asset.skinned && shadowLocBones_ >= 0) {
+            static Matrix ident[kMaxBones];
+            static bool init = false;
+            if (!init) {
+                for (auto& m : ident) m = MatrixIdentity();
+                init = true;
+            }
+            const Matrix* mats = (anim && anim->Valid()) ? anim->SkinMatrices() : ident;
+            rlEnableShader(ss.id);
+            rlSetUniformMatrices(shadowLocBones_, mats, std::min(int(asset.model.skeleton.boneCount), kMaxBones));
+        }
+        for (int i = 0; i < asset.model.meshCount; ++i) {
+            if (i < 64 && (p.hiddenMask >> i) & 1ull) continue;
+            Material mat = asset.model.materials[asset.model.meshMaterial[i]];
+            mat.shader = ss;
+            DrawMesh(asset.model.meshes[i], mat, world);
+        }
+        return;
+    }
     Shader& s = lit_[which];
     const LitLocs& l = locs_[which];
     Vector3 probe = p.hasProbe ? p.lightProbe : Vector3{world.m12, world.m13, world.m14};
@@ -356,6 +433,13 @@ void Renderer::DrawModel(const ModelAsset& asset, const Matrix& world, const Ani
 
 void Renderer::DrawStaticMesh(const Mesh& mesh, const Material& material, const Matrix& world, Vector3 probe,
                               const DrawParams& p) {
+    if (inShadow_) {
+        if (p.opacity < 1.0f) return;
+        Material mat = material;
+        mat.shader = shadow_[0];
+        DrawMesh(mesh, mat, world);
+        return;
+    }
     Shader& s = lit_[0];
     const LitLocs& l = locs_[0];
     BindLights(0, probe);
@@ -379,6 +463,7 @@ void Renderer::DrawStaticMesh(const Mesh& mesh, const Material& material, const 
 }
 
 void Renderer::DrawBlobShadow(Vector3 pos, float radius, float strength) {
+    if (inShadow_) return;
     rlDrawRenderBatchActive();
     rlDisableDepthMask();
     rlSetTexture(radial_.id);
@@ -397,6 +482,7 @@ void Renderer::DrawBlobShadow(Vector3 pos, float radius, float strength) {
 }
 
 void Renderer::DrawAdditiveBillboard(Texture2D tex, Vector3 pos, float size, Color color, float intensity) {
+    if (inShadow_) return;
     rlDrawRenderBatchActive();
     rlDisableDepthMask();
     BeginBlendMode(BLEND_ADDITIVE);
@@ -413,6 +499,7 @@ void Renderer::DrawHalo(Vector3 pos, float size, Color color, float intensity) {
 }
 
 void Renderer::DrawShaft(Vector3 apex, Vector3 dir, float length, float radius, Color color, float intensity) {
+    if (inShadow_) return;
     rlDrawRenderBatchActive();
     Vector3 d = Vector3Normalize(dir);
     Vector3 up = {0, 1, 0};
@@ -438,6 +525,12 @@ void Renderer::DrawShaft(Vector3 apex, Vector3 dir, float length, float radius, 
 }
 
 void Renderer::EndScene() {
+    if (shadowCube_) {
+        rlActiveTextureSlot(15);
+        rlDisableTextureCubemap();
+        rlActiveTextureSlot(0);
+    }
+    shadowValid_ = false;
     EndMode3D();
     EndTextureMode();
     if (msaaActive_) {
@@ -446,6 +539,73 @@ void Renderer::EndScene() {
         rlBlitFramebuffer(0, 0, w_, h_, 0, 0, w_, h_, GL_COLOR_BUFFER_BIT_);
         rlDisableFramebuffer();
     }
+}
+
+void Renderer::EnsureShadowTargets() {
+    int size = std::max(64, settings_.shadowSize);
+    if ((shadowFbo_ && shadowSize_ == size) || shadowFailed_) return;
+    DestroyShadowTargets();
+    shadowSize_ = size;
+    shadowCube_ = CreateFloatCubemap(size);
+    shadowDepth_ = rlLoadTextureDepth(size, size, true);
+    shadowFbo_ = rlLoadFramebuffer();
+    rlFramebufferAttach(shadowFbo_, shadowDepth_, RL_ATTACHMENT_DEPTH, RL_ATTACHMENT_RENDERBUFFER, 0);
+    rlFramebufferAttach(shadowFbo_, shadowCube_, RL_ATTACHMENT_COLOR_CHANNEL0, RL_ATTACHMENT_CUBEMAP_POSITIVE_X, 0);
+    if (!shadowCube_ || !rlFramebufferComplete(shadowFbo_)) {
+        LK_WARN("renderer: lantern shadow framebuffer incomplete; shadows off");
+        DestroyShadowTargets();
+        shadowFailed_ = true;
+    }
+    rlDisableFramebuffer();
+}
+
+void Renderer::DestroyShadowTargets() {
+    if (shadowFbo_) rlUnloadFramebuffer(shadowFbo_);
+    if (shadowCube_) rlUnloadTexture(shadowCube_);
+    shadowFbo_ = shadowCube_ = shadowDepth_ = 0;
+}
+
+void Renderer::BeginShadowPass(Vector3 lightPos, float farPlane) {
+    EnsureShadowTargets();
+    shadowLight_ = lightPos;
+    shadowFar_ = std::max(1.0f, farPlane);
+    for (int i = 0; i < 2; ++i) {
+        SetShaderValue(shadow_[i], shadowLocLight_[i], &shadowLight_, SHADER_UNIFORM_VEC3);
+        SetShaderValue(shadow_[i], shadowLocFar_[i], &shadowFar_, SHADER_UNIFORM_FLOAT);
+    }
+}
+
+void Renderer::BeginShadowFace(int face) {
+    if (!shadowFbo_) return;
+    static const Vector3 dirs[6] = {{1, 0, 0}, {-1, 0, 0}, {0, 1, 0}, {0, -1, 0}, {0, 0, 1}, {0, 0, -1}};
+    static const Vector3 ups[6] = {{0, -1, 0}, {0, -1, 0}, {0, 0, 1}, {0, 0, -1}, {0, -1, 0}, {0, -1, 0}};
+    rlFramebufferAttach(shadowFbo_, shadowCube_, RL_ATTACHMENT_COLOR_CHANNEL0, RL_ATTACHMENT_CUBEMAP_POSITIVE_X + face, 0);
+    RenderTexture2D rt{};
+    rt.id = shadowFbo_;
+    rt.texture.width = rt.texture.height = shadowSize_;
+    BeginTextureMode(rt);
+    ClearBackground(WHITE);  // 1.0 = nothing closer than the far plane
+    Camera3D c{};
+    c.position = shadowLight_;
+    c.target = Vector3Add(shadowLight_, dirs[face]);
+    c.up = ups[face];
+    c.fovy = 90.0f;
+    c.projection = CAMERA_PERSPECTIVE;
+    BeginMode3D(c);
+    inShadow_ = true;
+}
+
+void Renderer::EndShadowFace() {
+    if (!shadowFbo_) return;
+    rlDrawRenderBatchActive();
+    EndMode3D();
+    EndTextureMode();
+    inShadow_ = false;
+}
+
+void Renderer::EndShadowPass() {
+    inShadow_ = false;
+    shadowValid_ = shadowFbo_ != 0;
 }
 
 static void Blit(const Texture2D& src, RenderTexture2D& dst) {

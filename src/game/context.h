@@ -10,6 +10,7 @@ class Physics;
 class Input;
 class AudioManager;
 class Ui;
+struct Settings;
 class SaveSystem;
 struct GameState;
 
@@ -23,6 +24,7 @@ struct Ctx {
     SaveSystem& save;
     GameState& state;
     Ui& ui;
+    Settings& settings;
 };
 
 }  // namespace lk

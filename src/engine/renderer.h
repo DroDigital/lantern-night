@@ -42,6 +42,8 @@ struct RenderSettings {
     float saturation = 1.0f;
     int tonemapper = 0;   // 0 ACES, 1 AgX
     bool msaa = true;
+    bool lanternShadows = false;   // omnidirectional shadow map for light 0 (the lantern)
+    int shadowSize = 512;
 };
 
 struct DrawParams {
@@ -83,6 +85,15 @@ public:
     void DrawAdditiveBillboard(Texture2D tex, Vector3 pos, float size, Color color, float intensity);
     void EndScene();
 
+    // Omnidirectional lantern shadow map. Call between frames (outside BeginScene):
+    // for each face 0..5: BeginShadowFace(face) ... draw casters ... EndShadowFace().
+    bool ShadowsReady() const { return shadowFbo_ != 0; }
+    void BeginShadowPass(Vector3 lightPos, float farPlane);
+    void BeginShadowFace(int face);
+    void EndShadowFace();
+    void EndShadowPass();
+    bool InShadowPass() const { return inShadow_; }
+
     // Post pass to the current framebuffer (screen). screenFlash: 0..1 full-screen flash.
     void Present(int screenWidth, int screenHeight, float screenFlash = 0.0f, Color flashColor = WHITE);
 
@@ -104,6 +115,16 @@ private:
     Shader lit_[2]{};
     LitLocs locs_[2]{};
     Shader additive_{}, shaft_{}, bright_{}, blur_{}, composite_{};
+    Shader shadow_[2]{};
+    int shadowLocLight_[2]{-1, -1}, shadowLocFar_[2]{-1, -1}, shadowLocBones_ = -1;
+    int litShadowCube_[2]{-1, -1}, litShadowOn_[2]{-1, -1}, litShadowFar_[2]{-1, -1};
+    unsigned shadowFbo_ = 0, shadowCube_ = 0, shadowDepth_ = 0;
+    int shadowSize_ = 0;
+    bool inShadow_ = false, shadowValid_ = false, shadowFailed_ = false;
+    Vector3 shadowLight_{};
+    float shadowFar_ = 12.0f;
+    void EnsureShadowTargets();
+    void DestroyShadowTargets();
     int addIntensityLoc_ = -1, shaftIntensityLoc_ = -1;
     Texture2D radial_{};
     Mesh coneMesh_{};

@@ -60,6 +60,7 @@ int main(int argc, char** argv) {
         else if (a == "--size") {
             std::string s = next();
             std::sscanf(s.c_str(), "%dx%d", &opt.width, &opt.height);
+            opt.windowedOverride = true;
         } else if (a == "--help" || a == "-h") {
             PrintUsage();
             return 0;
