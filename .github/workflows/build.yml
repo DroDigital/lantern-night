@@ -1,0 +1,147 @@
+name: build
+
+on:
+  push:
+    branches: ['**']
+    tags: ['v*']
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: 'Publish a GitHub Release with this tag (e.g. v0.1.0) for the dispatched commit; empty = build only'
+        required: false
+        default: ''
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { name: windows-x64, os: windows-latest }
+          - { name: macos-universal, os: macos-latest }
+          - { name: linux-x64, os: ubuntu-22.04 }
+    defaults:
+      run:
+        shell: bash
+    env:
+      HAS_APPLE_CERT: ${{ secrets.APPLE_CERTIFICATE != '' && secrets.APPLE_ID != '' && secrets.APPLE_TEAM_ID != '' && secrets.APPLE_APP_PASSWORD != '' }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # git describe needs tags
+
+      - name: Linux packages
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends libx11-dev libxrandr-dev libxinerama-dev libxcursor-dev \
+            libxi-dev libgl1-mesa-dev libasound2-dev xvfb libgl1-mesa-dri mesa-utils
+
+      - name: Cache fetched dependencies
+        uses: actions/cache@v4
+        with:
+          path: build/release/_deps/*-src
+          key: deps-${{ runner.os }}-${{ hashFiles('cmake/Dependencies.cmake') }}
+
+      - name: Configure
+        env:
+          RELEASE_TAG: ${{ inputs.release_tag }}
+        run: |
+          # A dispatched release names its version (the tag does not exist until the release job creates it).
+          if [ -n "$RELEASE_TAG" ]; then cmake --preset release -DLK_VERSION_OVERRIDE="${RELEASE_TAG#v}"
+          else cmake --preset release; fi
+
+      - name: Build
+        run: cmake --build --preset release --parallel 4
+
+      - name: Unit tests
+        run: ctest --preset release
+
+      - name: Validate content
+        run: |
+          if [ "$RUNNER_OS" = "macOS" ]; then EXE=build/release/bin/LanternKnight.app/Contents/MacOS/LanternKnight
+          elif [ "$RUNNER_OS" = "Windows" ]; then EXE=build/release/bin/LanternKnight.exe
+          else EXE=build/release/bin/LanternKnight; fi
+          "$EXE" --validate
+
+      - name: Fetch Mesa llvmpipe (Windows smoke test only)
+        if: runner.os == 'Windows'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          MESA="$(cygpath -u "$RUNNER_TEMP")/mesa"
+          mkdir -p "$MESA" && cd "$MESA"
+          GL=""
+          # Newer mesa-dist-win MSVC builds dropped opengl32.dll; try MinGW, MSVC, then a pinned older release.
+          for spec in "latest|mesa3d-*-release-mingw.7z" "latest|mesa3d-*-release-msvc.7z" "24.3.4|mesa3d-*-release-msvc.7z"; do
+            tag="${spec%%|*}"; pat="${spec##*|}"
+            rm -rf x mesa.7z
+            if [ "$tag" = latest ]; then args=(); else args=("$tag"); fi
+            gh release download "${args[@]}" --repo pal1000/mesa-dist-win --pattern "$pat" --output mesa.7z --clobber || continue
+            7z x -y -ox mesa.7z > /dev/null || continue
+            GL="$(find x -ipath '*x64*' -iname opengl32.dll | head -1)"
+            if [ -n "$GL" ]; then echo "Using $spec: $GL"; break; fi
+          done
+          if [ -n "$GL" ]; then
+            echo "MESA_DIR=$MESA/$(dirname "$GL")" >> "$GITHUB_ENV"
+          else
+            echo "::warning::No mesa-dist-win package with opengl32.dll found"
+          fi
+
+      - name: Smoke test
+        run: tools/ci_smoke.sh build/release/bin
+
+      - name: Package
+        run: cmake --build --preset release --target package_game
+
+      - name: Developer ID sign + notarize (macOS, when secrets exist)
+        if: runner.os == 'macOS' && env.HAS_APPLE_CERT == 'true'
+        env:
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          APPLE_APP_PASSWORD: ${{ secrets.APPLE_APP_PASSWORD }}
+        run: packaging/macos/sign_notarize.sh build/release/dist
+
+      - name: Upload archive
+        uses: actions/upload-artifact@v4
+        with:
+          name: LanternKnight-${{ matrix.name }}
+          path: |
+            build/release/dist/*.zip
+            build/release/dist/*.tar.gz
+          if-no-files-found: error
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/v') || inputs.release_tag != ''
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*
+          tag_name: ${{ inputs.release_tag || github.ref_name }}
+          target_commitish: ${{ github.sha }}
+          generate_release_notes: true
+          body: |
+            Lantern Knight: a small knight, a dark crypt, and a lantern that is your life.
+
+            | OS | Download | Launch |
+            |---|---|---|
+            | Windows 10+ x64 | `LanternKnight-*-windows-x64.zip` | Unzip, run `LanternKnight.exe` (SmartScreen: *More info* then *Run anyway*). |
+            | macOS 11+ (Apple Silicon and Intel) | `LanternKnight-*-macos-universal.zip` | Unzip, open `Lantern Knight.app` (not notarized: right-click, *Open*). |
+            | Linux x64 | `LanternKnight-*-linux-x64.tar.gz` | `tar xzf` the archive, then run `./LanternKnight` in the extracted folder. |
+
+            No installer or runtime needed. Controls and save locations are in the README.txt inside each archive.

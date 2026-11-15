@@ -1,0 +1,105 @@
+{
+  "scale": 1.0,
+  "radius": 0.32,
+  "height": 1.15,
+  "turn_speed_deg": 300,
+  "walk_speed": 1.0,
+  "run_speed": 2.0,
+  "aggro_range": 12.0,
+  "lose_range": 18.0,
+  "attack_cooldown": [
+    1.2,
+    2.2
+  ],
+  "hit_flash_time": 0.12,
+  "posture_decay": 10.0,
+  "posture_decay_delay": 1.6,
+  "stagger_time": 1.5,
+  "flinch": true,
+  "glint_color": [
+    4.0,
+    3.2,
+    2.2
+  ],
+  "eyes": {
+    "emissive_meshes": [
+      "Eyes"
+    ],
+    "eye_color": [
+      3.2,
+      0.9,
+      0.25
+    ]
+  },
+  "name": "Skeleton Mage",
+  "model": "kaykit_skeletons/Skeleton_Mage.glb",
+  "anims": "anims/skeleton_mage.json",
+  "brain": "mage",
+  "hp": 50,
+  "posture": 40,
+  "embers": 50,
+  "strafe_range": [
+    6.0,
+    10.0
+  ],
+  "teleport_range": 3.0,
+  "teleport_distance": [
+    6.0,
+    9.0
+  ],
+  "teleport_cooldown": 4.0,
+  "weapon": {
+    "model": "kaykit_skeletons/items/Skeleton_Staff.gltf",
+    "bone": "handslot.r",
+    "base": [
+      0,
+      0.0,
+      0
+    ],
+    "tip": [
+      0,
+      1.2,
+      0
+    ],
+    "radius": 0.14
+  },
+  "bolt": {
+    "speed": 7.0,
+    "damage": 16,
+    "radius": 0.22,
+    "life": 3.0,
+    "color": [
+      0.6,
+      1.2,
+      4.0
+    ],
+    "turn_rate_deg": 25
+  },
+  "moves": [
+    {
+      "name": "bolt",
+      "anim": "cast",
+      "range": [
+        2.5,
+        13.0
+      ],
+      "damage": 16,
+      "hold": 0.5,
+      "lunge": 0.0,
+      "weight": 3,
+      "projectile": true
+    },
+    {
+      "name": "staff",
+      "anim": "attack_1",
+      "range": [
+        0,
+        1.8
+      ],
+      "damage": 10,
+      "hold": 0.4,
+      "lunge": 0.3,
+      "weight": 1
+    }
+  ]
+}

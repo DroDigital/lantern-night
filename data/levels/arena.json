@@ -1,0 +1,160 @@
+{
+  "version": 1,
+  "cell_size": 2.0,
+  "model_scale": 0.5,
+  "layer_height": 2.0,
+  "music": "ambient",
+  "legend": {
+    "#": {
+      "kind": "wall",
+      "variants": [
+        "wall",
+        "wall",
+        "wall_cracked"
+      ]
+    },
+    ".": {
+      "kind": "floor",
+      "piece": "floor_tile_large"
+    },
+    ",": {
+      "kind": "floor",
+      "piece": "floor_dirt_large"
+    }
+  },
+  "layers": [
+    {
+      "name": "floor",
+      "level": 0,
+      "origin": [
+        0,
+        0
+      ],
+      "rows": [
+        "##############",
+        "#............#",
+        "#............#",
+        "#............#",
+        "#............#",
+        "#............#",
+        "#............#",
+        "#............#",
+        "#............#",
+        "#............#",
+        "#............#",
+        "#............#",
+        "#............#",
+        "##############"
+      ]
+    }
+  ],
+  "player_spawn": {
+    "pos": [
+      14.0,
+      0.0,
+      22.0
+    ],
+    "rot": 180
+  },
+  "lights": [
+    {
+      "id": "t1",
+      "pos": [
+        2.6,
+        2.4,
+        8.0
+      ],
+      "preset": "torch_light"
+    },
+    {
+      "id": "t2",
+      "pos": [
+        25.4,
+        2.4,
+        8.0
+      ],
+      "preset": "torch_light"
+    },
+    {
+      "id": "t3",
+      "pos": [
+        2.6,
+        2.4,
+        20.0
+      ],
+      "preset": "torch_light"
+    },
+    {
+      "id": "t4",
+      "pos": [
+        25.4,
+        2.4,
+        20.0
+      ],
+      "preset": "torch_light"
+    }
+  ],
+  "name": "arena",
+  "enemies": [
+    {
+      "id": "a_min1",
+      "kind": "minion",
+      "pos": [
+        10.0,
+        0,
+        10.0
+      ],
+      "rot": 0
+    },
+    {
+      "id": "a_min2",
+      "kind": "minion",
+      "pos": [
+        12.0,
+        0,
+        8.0
+      ],
+      "rot": 0
+    },
+    {
+      "id": "a_min3",
+      "kind": "minion",
+      "pos": [
+        16.0,
+        0,
+        9.0
+      ],
+      "rot": 0
+    },
+    {
+      "id": "a_war",
+      "kind": "warrior",
+      "pos": [
+        14.0,
+        0,
+        12.0
+      ],
+      "rot": 0
+    },
+    {
+      "id": "a_rog",
+      "kind": "rogue",
+      "pos": [
+        19.0,
+        0,
+        13.0
+      ],
+      "rot": 0
+    },
+    {
+      "id": "a_mag",
+      "kind": "mage",
+      "pos": [
+        14.0,
+        0,
+        4.0
+      ],
+      "rot": 0
+    }
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "name": "Barbarian's Greataxe",
+  "anims": "anims/knight_greataxe.json",
+  "show_meshes": [],
+  "hide_meshes": ["1H_Sword", "Round_Shield", "1H_Sword_Offhand", "Badge_Shield", "Rectangle_Shield", "Spike_Shield", "2H_Sword"],
+  "attach": { "model": "kaykit_adventures/items/axe_2handed.gltf", "bone": "handslot.r" },
+  "shield": false,
+  "damage_light": 24,
+  "damage_heavy": 42,
+  "posture_light": 16,
+  "posture_heavy": 54,
+  "posture_note": "+80% posture damage vs the sword",
+  "stamina_light": 16,
+  "stamina_heavy": 30,
+  "speed_mult": 1.0,
+  "hitbox": { "bone": "handslot.r", "base": [0, 0.3, 0], "tip": [0, 1.25, 0], "radius": 0.28 },
+  "trail_color": [255, 190, 140],
+  "trail_intensity": 1.8
+}

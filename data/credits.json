@@ -1,0 +1,9 @@
+{
+  "title": "Lantern Knight",
+  "sections": [
+    { "heading": "Art (CC0)", "lines": ["KayKit Character Packs: Adventures, Skeletons", "KayKit Dungeon Remastered", "by Kay Lousberg", "Fantasy Props MegaKit by Quaternius", "Input Prompts and Kenney Fonts by Kenney"] },
+    { "heading": "Audio (CC0)", "lines": ["RPG Audio by Kenney", "Breaking, Falling and Hit SFX and Creature SFX by rubberduck", "Sword Sound Effects by StarNinjas", "Dark Cavern Ambient by Paul Wortmann", "Basilisk Boss Battle by Beardalaxy"] },
+    { "heading": "Libraries", "lines": ["raylib by Ramon Santamaria and contributors", "Jolt Physics by Jorrit Rouwe", "nlohmann/json by Niels Lohmann", "doctest by Viktor Kirilov"] },
+    { "heading": "", "lines": ["Thank you for keeping the flame alive."] }
+  ]
+}
