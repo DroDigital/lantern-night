@@ -118,19 +118,21 @@ void Ui::Begin(int sw, int sh, const InputFrame& nav, Device device, PadFamily f
     offX_ = (float(sw) - 1920.0f * scale_) * 0.5f;
     offY_ = 0;
     nav_ = nav;
+    suppress_ &= nav.held | nav.pressed;   // released buttons work again
+    nav_.pressed &= ~suppress_;
     device_ = device;
     family_ = family;
     widgetCount_ = widget_;
     widget_ = 0;
-    back_ = nav.Pressed(Act::Back);
+    back_ = nav_.Pressed(Act::Back);
     moved_ = false;
     activated_ = false;
     if (widgetCount_ > 0) {
-        if (nav.Pressed(Act::Down)) {
+        if (nav_.Pressed(Act::Down)) {
             focus_ = (focus_ + 1) % widgetCount_;
             moved_ = true;
         }
-        if (nav.Pressed(Act::Up)) {
+        if (nav_.Pressed(Act::Up)) {
             focus_ = (focus_ + widgetCount_ - 1) % widgetCount_;
             moved_ = true;
         }

@@ -89,6 +89,9 @@
 - Soft aim: without lock-on, an attack turns toward the closest enemy within 2.6 m and 70 degrees of the stick (or the knight's facing); `soft_aim` in `data/player/stats.json`.
 - App icons (Windows .ico in the exe, macOS .icns in the bundle, Linux .png + .desktop), README with download and launch steps per OS, `v0.1.0` tag with a GitHub Release carrying the Windows, macOS and Linux archives.
 
+- v0.1.0 released (GitHub Release with the Windows, macOS and Linux archives). The Linux archive from the release was unpacked and played with real keyboard/mouse input from New game through the first room (two minions), to the Entrance Shrine (lit, rested, levelled Vigor) and back through the respawned minions to the start hall.
+- v0.1.1: that playthrough found that on keyboard Escape (Pause + Back) opened and closed the pause menu in the same frame, and E (Interact + Confirm) jumped from Rest straight into the Level up page. A menu now ignores the button that opened it until it is released.
+
 ### Known issues
 - Gamepad feel and the overall difficulty were tuned from data, captures and scripted runs; no human playtest happened in the build environment.
 - macOS builds are ad-hoc signed unless the `APPLE_*` secrets are configured, so Gatekeeper asks once (see README).

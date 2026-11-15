@@ -228,6 +228,10 @@ void Session::UpdateMenus(const InputFrame& in) {
 
 void Session::RenderMenus() {
     Ui& ui = ctx_.ui;
+    // Escape is Pause and Back, E is Interact and Confirm: the press that opened a menu
+    // must not also pick something in it.
+    if (menu_ != shownMenu_) ui.DropPresses();
+    shownMenu_ = menu_;
     SaveData& p = ctx_.state.progress;
     if (menu_ == Menu::Shrine) {
         bool hasAxe = p.pickedItems.count("greataxe") > 0;
@@ -270,6 +274,7 @@ void Session::RenderMenus() {
         if (a == MenuAction::Settings) {
             menu_ = Menu::Settings;
             ui.ResetFocus();
+            ui.DropPresses();
             ctx_.audio.Play("ui_confirm");
         }
         if (a == MenuAction::QuitToDesktop) {
@@ -290,6 +295,7 @@ void Session::RenderMenus() {
         if (a == MenuAction::Close) {
             menu_ = Menu::Pause;
             ui.ResetFocus();
+            ui.DropPresses();
             ctx_.audio.Play("ui_back");
         }
         if (ui.MovedFocus()) ctx_.audio.Play("ui_move");

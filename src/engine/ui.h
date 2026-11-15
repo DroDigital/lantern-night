@@ -40,6 +40,13 @@ public:
     // Left/Right adjustable row; returns -1/+1 when changed, 0 otherwise.
     int Stepper(const std::string& label, const std::string& value, Rectangle r);
     void ResetFocus() { focus_ = 0; }
+    // Forget this frame's button presses (the press that opened a menu must not also act in it).
+    // The suppressed buttons stay ignored until released.
+    void DropPresses() {
+        suppress_ |= nav_.held | nav_.pressed;
+        nav_.pressed = 0;
+        back_ = false;
+    }
     int Focus() const { return focus_; }
     bool BackPressed() const { return back_; }
     bool MovedFocus() const { return moved_; }
@@ -68,6 +75,7 @@ private:
     float vh_ = 1080.0f;
     float offX_ = 0, offY_ = 0;
     InputFrame nav_;
+    uint32_t suppress_ = 0;
     Device device_ = Device::KeyboardMouse;
     PadFamily family_ = PadFamily::Xbox;
     int focus_ = 0, widget_ = 0, widgetCount_ = 0;

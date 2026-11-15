@@ -206,6 +206,7 @@ private:
     // Shrines, death, menus
     enum class Menu { None, Shrine, Pause, Credits, Settings };
     Menu menu_ = Menu::None;
+    Menu shownMenu_ = Menu::None;   // menu drawn last frame (a newly opened menu ignores the opening press)
     ShrineMenuState shrineMenu_;
     std::vector<Shrine> shrines_;
     const Shrine* restingAt_ = nullptr;
