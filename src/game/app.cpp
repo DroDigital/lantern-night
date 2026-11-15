@@ -1,6 +1,7 @@
 #include "game/app.h"
 
 #include <algorithm>
+#include <chrono>
 #include <cmath>
 #include <filesystem>
 
@@ -72,7 +73,27 @@ void App::ShutdownEngine() {
 
 int App::Run(const AppOptions& opt) {
     opt_ = opt;
-    if (!opt.userDir.empty()) paths::SetUserDir(opt.userDir);
+    // Test and capture modes must never touch the player's own save and settings: without
+    // --user-dir they get a fresh throwaway folder, removed again afterwards.
+    bool testMode = opt.smokeTest || opt.selfTest || !opt.captureScene.empty() || !opt.animReport.empty();
+    std::string tempUser;
+    if (!opt.userDir.empty()) {
+        paths::SetUserDir(opt.userDir);
+    } else if (testMode) {
+        std::error_code ec;
+        auto stamp = std::chrono::steady_clock::now().time_since_epoch().count();
+        tempUser = (fs::temp_directory_path(ec) / ("lantern-knight-test-" + std::to_string(stamp))).string();
+        fs::create_directories(tempUser, ec);
+        paths::SetUserDir(tempUser);
+        LK_INFO("test mode: user data in %s", tempUser.c_str());
+    }
+    struct Cleanup {
+        std::string dir;
+        ~Cleanup() {
+            std::error_code ec;
+            if (!dir.empty()) fs::remove_all(dir, ec);
+        }
+    } cleanup{tempUser};
     if (!opt.captureScene.empty()) return RunCapture();
     if (opt.smokeTest) return RunSmoke();
     if (!opt.animReport.empty()) return RunAnimReport();

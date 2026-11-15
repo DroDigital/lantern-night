@@ -69,7 +69,7 @@ cmake --build --preset release --target package_game
 | `LanternKnight --selftest` | Deterministic checks only: combat, enemies, world (gates, braziers, pickups, persistence) and the boss. |
 | `LanternKnight --anim-report docs/anim_timing.md` | Measures attack swing windows from the clips. |
 | `LanternKnight --capture all --frames 90 --out shots` | Renders the capture scenes and saves PNGs (`menus`, `areas` or one scene name also work). |
-| `LanternKnight --user-dir DIR` | Uses DIR for the save and settings instead of the per-user folder. |
+| `LanternKnight --user-dir DIR` | Uses DIR for the save and settings instead of the per-user folder. Test and capture modes (`--smoke-test`, `--selftest`, `--capture`, `--anim-report`) use a throwaway temp folder unless this is given, so they never touch your save. |
 | `asset_report assets docs/asset_report.md` | Regenerates the asset report. |
 
 ## Repository layout

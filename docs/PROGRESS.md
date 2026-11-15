@@ -91,6 +91,7 @@
 
 - v0.1.0 released (GitHub Release with the Windows, macOS and Linux archives). The Linux archive from the release was unpacked and played with real keyboard/mouse input from New game through the first room (two minions), to the Entrance Shrine (lit, rested, levelled Vigor) and back through the respawned minions to the start hall.
 - v0.1.1: that playthrough found that on keyboard Escape (Pause + Back) opened and closed the pause menu in the same frame, and E (Interact + Confirm) jumped from Rest straight into the Level up page. A menu now ignores the button that opened it until it is released.
+- v0.1.2: checking v0.1.1 showed that `--selftest` and `--smoke-test` run without `--user-dir` wrote their scripted saves into the player's real save folder. Test and capture modes now use a throwaway temp folder unless `--user-dir` is given.
 
 ### Known issues
 - Gamepad feel and the overall difficulty were tuned from data, captures and scripted runs; no human playtest happened in the build environment.
