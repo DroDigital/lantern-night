@@ -85,6 +85,7 @@
 - Particles (built in M1 to M5): lantern embers, hit and block sparks, brazier fire, mage bolt tails, death bursts, ember piles; weapon ribbon trails.
 - Dressing pass: `build_zone.py` adds 57 deterministic props (low clutter along walls, barrels/crates/kegs/trunks in room corners) away from interactables, stairs and the boss arena.
 - Balance pass: the Hollow Warden drops from 1,500 to 1,100 HP (about 70 light hits instead of 94, fewer with Might levels and ripostes); the other numbers held up in the self-tests and captures.
+- Camera: against walls the boom now snaps in to the wall hit (down to 0.15 m) instead of stopping at a 0.6 m floor that let it pass through the wall, and the knight is hidden while the camera is closer than 0.8 m (found while playing the packaged build).
 - App icons (Windows .ico in the exe, macOS .icns in the bundle, Linux .png + .desktop), README with download and launch steps per OS, `v0.1.0` tag with a GitHub Release carrying the Windows, macOS and Linux archives.
 
 ### Known issues

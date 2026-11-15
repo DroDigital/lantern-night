@@ -10,9 +10,9 @@ namespace lk {
 class Physics;
 
 struct CameraTuning {
-    float distance = 4.5f, minDistance = 0.6f, pivotHeight = 1.15f;
+    float distance = 4.5f, minDistance = 0.15f, hideKnightBelow = 0.8f, pivotHeight = 1.15f;
     float pitchDefault = 22.0f, pitchMin = -35.0f, pitchMax = 65.0f;
-    float followSharpness = 12.0f, collisionRadius = 0.25f, collisionIn = 30.0f, collisionOut = 4.0f;
+    float followSharpness = 12.0f, collisionRadius = 0.25f, collisionOut = 4.0f;
     float fov = 55.0f, lockonPitch = 18.0f, lockonTurn = 8.0f, lockonShoulder = 0.55f, lockonDistance = 4.8f;
     float shakeDecay = 7.0f, shakeFrequency = 32.0f;
     void Load(const json& j);
@@ -29,6 +29,7 @@ public:
 
     Camera3D Cam() const { return cam_; }
     float Yaw() const { return yaw_; }
+    float Distance() const { return curDist_; }   // current boom length (shrinks against walls)
     // Camera-relative basis on the ground plane.
     Vector3 Forward() const;
     Vector3 Right() const;

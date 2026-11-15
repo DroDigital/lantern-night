@@ -1,6 +1,7 @@
 {
   "distance": 4.5,
-  "min_distance": 0.6,
+  "min_distance": 0.15,
+  "hide_knight_below": 0.8,
   "pivot_height": 1.15,
   "shoulder_offset": 0.0,
   "pitch_default_deg": 22.0,
@@ -8,7 +9,6 @@
   "pitch_max_deg": 65.0,
   "follow_sharpness": 12.0,
   "collision_radius": 0.25,
-  "collision_sharpness_in": 30.0,
   "collision_sharpness_out": 4.0,
   "fov_deg": 55.0,
   "lockon_pitch_deg": 26.0,

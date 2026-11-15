@@ -689,7 +689,8 @@ void Session::Render(float alpha, int sw, int sh) {
     r.BeginScene(cam);
     world_.Draw(r, cam.position, drawDistance_);
     Vector3 pp = player_.RenderPos(alpha);
-    player_.Draw(r, alpha);
+    // Camera squeezed against a wall: hide the knight rather than fill the screen with his helmet.
+    if (camOverride_ || cam_.Distance() >= cam_.tuning.hideKnightBelow) player_.Draw(r, alpha);
     r.DrawBlobShadow(pp, blobTune_.x, blobTune_.y);
     for (const auto& e : enemies_)
         if (Vector3Distance(e->Pos(), cam.position) < drawDistance_) e->Draw(r, alpha, realTime_);

@@ -10,13 +10,13 @@ namespace lk {
 void CameraTuning::Load(const json& j) {
     distance = j.value("distance", distance);
     minDistance = j.value("min_distance", minDistance);
+    hideKnightBelow = j.value("hide_knight_below", hideKnightBelow);
     pivotHeight = j.value("pivot_height", pivotHeight);
     pitchDefault = j.value("pitch_default_deg", pitchDefault);
     pitchMin = j.value("pitch_min_deg", pitchMin);
     pitchMax = j.value("pitch_max_deg", pitchMax);
     followSharpness = j.value("follow_sharpness", followSharpness);
     collisionRadius = j.value("collision_radius", collisionRadius);
-    collisionIn = j.value("collision_sharpness_in", collisionIn);
     collisionOut = j.value("collision_sharpness_out", collisionOut);
     fov = j.value("fov_deg", fov);
     lockonPitch = j.value("lockon_pitch_deg", lockonPitch);
@@ -83,8 +83,8 @@ void CameraRig::Update(float dt, Vector3 followPos, Vector2 look, const Vector3*
         RayHit h = physics->SphereCast(basePivot, far, tuning.collisionRadius);
         if (h.hit) want = std::max(tuning.minDistance, dist * h.fraction - 0.05f);
     }
-    if (dt <= 0) curDist_ = want;
-    else if (want < curDist_) curDist_ += (want - curDist_) * Damp(tuning.collisionIn, dt);
+    // Pull in to a wall at once (never render from inside it); ease back out.
+    if (dt <= 0 || want < curDist_) curDist_ = want;
     else curDist_ += (want - curDist_) * Damp(tuning.collisionOut, dt);
 
     // Squeezed against a wall: tilt up and look over the knight instead of hugging their back.
