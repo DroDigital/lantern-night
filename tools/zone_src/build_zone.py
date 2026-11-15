@@ -170,6 +170,8 @@ zone["enemies"] = [
     # The Twin Blades
     {"id": "twin_a", "kind": "twin_blade", "pos": C(47, 32, 1), "rot": 0},
     {"id": "twin_b", "kind": "twin_blade", "pos": C(52, 32, 1), "rot": 0},
+    # The Hollow Warden waits in the arena behind the fog gate.
+    {"id": "warden", "kind": "hollow_warden", "pos": [99.0, 2.0, 5.0], "rot": 0, "dormant": True},
 ]
 
 zone["braziers"] = [
@@ -221,6 +223,7 @@ zone["triggers"] = [
     {"id": "area_entrance", "name": "Crypt Entrance", "pos": [13.0, 3.0, 63.0], "size": [12, 4, 12], "music": "ambient"},
     {"id": "area_ossuary", "name": "Flooded Ossuary", "pos": [40.0, 1.0, 13.0], "size": [6, 3, 18], "music": "ambient"},
     {"id": "area_warden", "name": "Warden's Hall", "pos": [92.0, 3.0, 38.0], "size": [8, 4, 8], "music": "ambient"},
+    {"id": "area_arena", "name": "", "pos": [99.0, 3.0, 8.0], "size": [24, 4, 16]},
 ]
 
 def torch(x, z, level, wall):

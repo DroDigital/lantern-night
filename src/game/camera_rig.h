@@ -22,7 +22,8 @@ class CameraRig {
 public:
     void Reset(Vector3 target, float yawRad);
     // look: input delta (radians). lockTarget: world point to keep in frame (nullptr if none).
-    void Update(float dt, Vector3 followPos, Vector2 look, const Vector3* lockTarget, const Physics* physics);
+    // lockHeight: height of the locked target (big targets pull the camera back and up).
+    void Update(float dt, Vector3 followPos, Vector2 look, const Vector3* lockTarget, const Physics* physics, float lockHeight = 1.2f);
     void AddShake(float amount) { shake_ = std::fmin(1.0f, shake_ + amount); }
     void SetShakeEnabled(bool on) { shakeEnabled_ = on; }
 
@@ -42,6 +43,7 @@ private:
     float curDist_ = 4.5f;
     float shake_ = 0.0f, shakeTime_ = 0.0f;
     float shoulder_ = 0.0f;
+    float squeeze_ = 0.0f;
     bool shakeEnabled_ = true;
 };
 

@@ -1,0 +1,172 @@
+{
+  "_doc": "The Hollow Warden: Skeleton Warrior scaled x2.5. Moves carry phase: 0 = both phases, 1 = phase 1 only, 2 = phase 2 only.",
+  "name": "The Hollow Warden",
+  "model": "kaykit_skeletons/Skeleton_Warrior.glb",
+  "anims": "anims/hollow_warden.json",
+  "brain": "boss",
+  "boss_group": "hollow_warden",
+  "boss_name": "The Hollow Warden",
+  "hp": 1500,
+  "posture": 280,
+  "posture_decay": 16.0,
+  "posture_decay_delay": 2.0,
+  "stagger_time": 2.0,
+  "embers": 3000,
+  "scale": 2.5,
+  "radius": 0.32,
+  "height": 1.15,
+  "turn_speed_deg": 150,
+  "walk_speed": 1.4,
+  "run_speed": 2.8,
+  "aggro_range": 40.0,
+  "lose_range": 80.0,
+  "strafe_range": [
+    2.6,
+    4.4
+  ],
+  "attack_cooldown": [
+    0.7,
+    1.5
+  ],
+  "flinch": false,
+  "tint": [
+    235,
+    225,
+    215
+  ],
+  "weapon": {
+    "model": "kaykit_skeletons/items/Skeleton_Blade.gltf",
+    "bone": "handslot.r",
+    "base": [
+      0,
+      0.1,
+      0
+    ],
+    "tip": [
+      0,
+      1.15,
+      0
+    ],
+    "radius": 0.16
+  },
+  "offhand": {
+    "model": "kaykit_skeletons/items/Skeleton_Shield_Large_A.gltf",
+    "bone": "handslot.l"
+  },
+  "eyes": {
+    "eye_color": [
+      5.0,
+      1.2,
+      0.3
+    ]
+  },
+  "glint_color": [
+    6.0,
+    4.0,
+    2.5
+  ],
+  "phases": [
+    {
+      "name": "phase1",
+      "hp_above": 0.5,
+      "music": "boss"
+    },
+    {
+      "name": "phase2",
+      "hp_above": 0.0,
+      "roar": true,
+      "snuff_braziers": true,
+      "summon": {
+        "kind": "minion",
+        "count": 3,
+        "radius": 5.0
+      }
+    }
+  ],
+  "victory": {
+    "banner": "FLAME REKINDLED",
+    "reward_vigor": 2,
+    "credits_after": 6.0
+  },
+  "moves": [
+    {
+      "name": "sweep",
+      "anim": "sweep_1",
+      "range": [
+        0,
+        4.9
+      ],
+      "damage": 24,
+      "hold": 0.45,
+      "lunge": 1.0,
+      "weight": 3,
+      "combo": "sweep2",
+      "combo_chance": 0.9,
+      "phase": 0
+    },
+    {
+      "name": "sweep2",
+      "anim": "sweep_2",
+      "range": [
+        0,
+        5.3
+      ],
+      "damage": 24,
+      "hold": 0.3,
+      "lunge": 0.8,
+      "weight": 0,
+      "phase": 0
+    },
+    {
+      "name": "slam",
+      "anim": "slam",
+      "range": [
+        0,
+        5.6
+      ],
+      "damage": 34,
+      "hold": 0.9,
+      "lunge": 0.6,
+      "weight": 2,
+      "aoe": true,
+      "aoe_radius": 6.5,
+      "aoe_damage": 18,
+      "phase": 0
+    },
+    {
+      "name": "charge",
+      "anim": "charge",
+      "range": [
+        5.5,
+        16.0
+      ],
+      "damage": 28,
+      "hold": 0.6,
+      "lunge": 0,
+      "weight": 2,
+      "charge": true,
+      "charge_speed": 9.0,
+      "charge_time": 1.3,
+      "phase": 0
+    },
+    {
+      "name": "slam_delayed",
+      "anim": "slam_delayed",
+      "range": [
+        0,
+        5.6
+      ],
+      "damage": 38,
+      "hold": [
+        1.35,
+        1.75
+      ],
+      "lunge": 0.6,
+      "weight": 3,
+      "aoe": true,
+      "aoe_radius": 7.5,
+      "aoe_damage": 20,
+      "phase": 2
+    }
+  ]
+}

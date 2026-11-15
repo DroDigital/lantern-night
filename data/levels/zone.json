@@ -490,6 +490,17 @@
     65.0
    ],
    "rot": 0
+  },
+  {
+   "id": "warden",
+   "kind": "hollow_warden",
+   "pos": [
+    99.0,
+    2.0,
+    5.0
+   ],
+   "rot": 0,
+   "dormant": true
   }
  ],
  "braziers": [
@@ -807,6 +818,20 @@
     8
    ],
    "music": "ambient"
+  },
+  {
+   "id": "area_arena",
+   "name": "",
+   "pos": [
+    99.0,
+    3.0,
+    8.0
+   ],
+   "size": [
+    24,
+    4,
+    16
+   ]
   }
  ],
  "lights": [

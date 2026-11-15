@@ -9,4 +9,6 @@ int RunCombatSelfTest(Ctx& ctx);
 int RunEnemySelfTest(Ctx& ctx);
 // World scenarios on data/levels/zone.json (braziers, secret, shortcuts, pickups, mini-boss).
 int RunWorldSelfTest(Ctx& ctx);
+// The Hollow Warden: fog gate, phases, shockwave, summons, reset on death, victory.
+int RunBossSelfTest(Ctx& ctx);
 }  // namespace lk

@@ -50,6 +50,7 @@ enum class FxType {
     Embers,
     Sound,         // generic named sound at pos
     Shake,
+    BossPhase,     // boss entered a new phase (name = enemy key)
 };
 
 struct FxEvent {

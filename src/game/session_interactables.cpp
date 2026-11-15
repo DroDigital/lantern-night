@@ -358,6 +358,10 @@ void Session::UpdateBossGroups() {
         }
         if (!anyAlive) {
             p.defeatedBosses.insert(group);
+            if (members.front()->Def().brain == "boss") {
+                OnBossDefeated(members.front()->Def());
+                continue;
+            }
             for (auto& g : gates_)
                 if (g.kind == GateKind::Locked && g.unlockBoss == group && !g.open) {
                     SetGateOpen(g, true, false);
@@ -437,8 +441,4 @@ void Session::DrawWorldAdditive(Renderer& r) {
         r.DrawHalo(Vector3Add(h.pos, Vector3{0, 0.05f, 0}), 0.8f, Color{255, 170, 90, 255}, 0.5f + 0.2f * std::sin(realTime_ * 2.0f));
 }
 
-}  // namespace lk
-
-namespace lk {
-void Session::EnterFogGate(Gate& g) { (void)g; }  // M5: boss arena entry
 }  // namespace lk

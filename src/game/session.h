@@ -105,7 +105,14 @@ public:
     std::vector<Brazier>& Braziers() { return braziers_; }
     std::vector<Gate>& Gates() { return gates_; }
     std::vector<Pickup>& Pickups() { return pickups_; }
-    const BossBar& Boss() const { return bossBar_; }
+    const BossBar& GetBossBar() const { return bossBar_; }
+    Enemy* Boss();
+    // Tests: strike an enemy directly through the normal damage path (fx go through ProcessFx).
+    StrikeResult DebugStrike(Enemy* e, float damage, float posture);
+    Gate* FindGate(const std::string& id);
+    void DebugEnterFog();
+    bool VictoryShown() const { return victoryTime_ > 0; }
+    const std::vector<Shockwave>& Waves() const { return waves_; }
     // Interact with whatever is in range right now (also used by the smoke-test bot).
     std::string InteractPromptTarget() const { return promptTarget_; }
     void OpenPause() { menu_ = Menu::Pause; ctx_.ui.ResetFocus(); }
@@ -147,6 +154,14 @@ private:
     void DrawWorldObjects(Renderer& r);
     void DrawWorldAdditive(Renderer& r);
     void EnterFogGate(Gate& g);
+    // session_boss.cpp
+    void StartBossFight();
+    void ResetBossFight();
+    void OnBossPhase(const FxEvent& e);
+    void UpdateShockwaves(float dt);
+    void OnBossDefeated(const EnemyDef& d);
+    void UpdateVictory(float dt);
+    void RenderVictory();
     void RenderDebug(int sw, int sh);
 
     Ctx& ctx_;
@@ -166,6 +181,11 @@ private:
     std::vector<std::unique_ptr<Enemy>> enemies_;
     std::vector<Projectile> projectiles_;
     std::vector<ProjectileSpawn> spawns_;
+    std::vector<Shockwave> waves_;
+    bool summoned_ = false;
+    std::string victoryBanner_;
+    float victoryTime_ = 0, creditsAfter_ = 6, creditsScroll_ = 0;
+    bool creditsShown_ = false;
     AttackTokens tokens_;
     FxQueue fx_;
     json feel_;
@@ -184,7 +204,7 @@ private:
     int nextEnemyId_ = 1;
     float emberFlash_ = 0;
     // Shrines, death, menus
-    enum class Menu { None, Shrine, Pause };
+    enum class Menu { None, Shrine, Pause, Credits };
     Menu menu_ = Menu::None;
     ShrineMenuState shrineMenu_;
     std::vector<Shrine> shrines_;

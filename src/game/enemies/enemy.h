@@ -28,7 +28,10 @@ struct EnemyMove {
     float comboChance = 0;
     bool projectile = false;
     bool aoe = false;          // boss shockwave: hits around the impact point
-    float aoeRadius = 0;
+    float aoeRadius = 0, aoeDamage = 0;
+    bool charge = false;       // boss shield charge: dash with a body hitbox
+    float chargeSpeed = 9, chargeTime = 1.2f;
+    int phase = 0;             // 0 any, 1 phase 1 only, 2 phase 2 only
     std::string fx;            // extra fx tag
 };
 
@@ -51,6 +54,11 @@ struct EnemyDef {
     Vector3 hitBase{0, 0.1f, 0}, hitTip{0, 1.1f, 0};
     float hitRadius = 0.16f;
     std::vector<EnemyMove> moves;
+    // boss
+    float phase2At = 0.5f;
+    std::string summonKind;
+    int summonCount = 0;
+    float summonRadius = 5;
     Vector3 eyeColor{3.2f, 0.9f, 0.25f};
     Vector3 glintColor{4, 3.2f, 2.2f};
     Color tint = WHITE;
@@ -77,6 +85,12 @@ private:
     std::set<int> holders_;
 };
 
+struct Shockwave {
+    Vector3 center{};
+    float radius = 0.2f, maxRadius = 6, speed = 9, damage = 15;
+    bool hitPlayer = false;
+};
+
 struct ProjectileSpawn {
     Vector3 pos, dir;
     int owner;
@@ -92,6 +106,7 @@ struct EnemyEnv {
     const Nav* nav = nullptr;
     AttackTokens* tokens = nullptr;
     std::vector<ProjectileSpawn>* spawns = nullptr;
+    std::vector<Shockwave>* waves = nullptr;
     std::vector<Vector3> others;   // positions of other live enemies (separation)
     float time = 0;
 };
@@ -113,7 +128,7 @@ struct StrikeResult {
     float damageDealt = 0;
 };
 
-enum class EState { Idle, Alert, Approach, Strafe, Attack, Recover, Hit, Stagger, Dead, Teleport, Dormant };
+enum class EState { Idle, Alert, Approach, Strafe, Attack, Recover, Hit, Stagger, Dead, Teleport, Dormant, Roar };
 const char* EStateName(EState s);
 
 class Enemy {
@@ -132,7 +147,10 @@ public:
     void OnParried(FxQueue& fx);
 
     geom::Capsule Hurtbox() const;
-    bool AttackActive() const { return state_ == EState::Attack && swing_.active; }
+    bool AttackActive() const { return state_ == EState::Attack && swing_.active && !(move_ && move_->charge); }
+    bool ChargeActive() const { return state_ == EState::Attack && charging_; }
+    int Phase() const { return phase_; }
+    void ForceAggro() { aggro_ = true; if (state_ == EState::Idle || state_ == EState::Dormant) ChangeState(EState::Approach); }
     SwingTracker& Swing() { return swing_; }
     void WeaponPoints(Vector3& base, Vector3& tip) const;
     const EnemyMove* CurrentMove() const { return move_; }
@@ -200,6 +218,10 @@ private:
     float hitFlash_ = 0;
     float lastHurt_ = -100;
     float now_ = 0;
+    int phase_ = 1;
+    bool charging_ = false;
+    float chargeTimer_ = 0;
+    Vector3 chargeLast_{};
     float teleportCd_ = 0;
     float swingTimer_ = 0;
     float swingStartedAt_ = -1;

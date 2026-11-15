@@ -40,6 +40,7 @@ const char* EStateName(EState s) {
         case EState::Stagger: return "stagger";
         case EState::Dead: return "dead";
         case EState::Teleport: return "teleport";
+        case EState::Roar: return "roar";
         case EState::Dormant: return "dormant";
     }
     return "?";
@@ -142,9 +143,26 @@ bool EnemyDef::Load(const std::string& k, const json& j, const json& animMap) {
         mv.projectile = m.value("projectile", false);
         mv.aoe = m.value("aoe", false);
         mv.aoeRadius = m.value("aoe_radius", 0.0f);
+        mv.aoeDamage = m.value("aoe_damage", 0.0f);
+        mv.charge = m.value("charge", false);
+        mv.chargeSpeed = m.value("charge_speed", mv.chargeSpeed);
+        mv.chargeTime = m.value("charge_time", mv.chargeTime);
+        mv.phase = m.value("phase", 0);
         mv.fx = m.value("fx", "");
         moves.push_back(mv);
     }
+    if (j.contains("phases"))
+        for (const auto& ph : j["phases"]) {
+            if (ph.value("roar", false)) {
+                if (ph.contains("summon")) {
+                    summonKind = ph["summon"].value("kind", "minion");
+                    summonCount = ph["summon"].value("count", 3);
+                    summonRadius = ph["summon"].value("radius", 5.0f);
+                }
+            } else {
+                phase2At = ph.value("hp_above", phase2At);
+            }
+        }
     return !model.empty();
 }
 
@@ -199,6 +217,8 @@ void Enemy::Respawn() {
     posture_.staggerDuration = def_->staggerTime;
     aggro_ = false;
     move_ = nullptr;
+    phase_ = 1;
+    charging_ = false;
     swing_.Stop();
     hitFlash_ = 0;
     lastHurt_ = -100;
@@ -288,13 +308,16 @@ void Enemy::MoveToward(Vector3 target, float speed, const EnemyEnv& env, float d
 }
 
 const EnemyMove* Enemy::PickMove(float dist) const {
+    auto ok = [&](const EnemyMove& m) {
+        return m.weight > 0 && dist >= m.rangeMin && dist <= m.rangeMax && (m.phase == 0 || m.phase == phase_);
+    };
     float total = 0;
     for (const auto& m : def_->moves)
-        if (m.weight > 0 && dist >= m.rangeMin && dist <= m.rangeMax) total += m.weight;
+        if (ok(m)) total += m.weight;
     if (total <= 0) return nullptr;
     float r = const_cast<Enemy*>(this)->Rand() * total;
     for (const auto& m : def_->moves) {
-        if (m.weight <= 0 || dist < m.rangeMin || dist > m.rangeMax) continue;
+        if (!ok(m)) continue;
         r -= m.weight;
         if (r <= 0) return &m;
     }
@@ -311,6 +334,8 @@ void Enemy::StartAttack(const EnemyMove& m, FxQueue& fx) {
     holdDone_ = false;
     firedProjectile_ = false;
     lungeLeft_ = m.lunge;
+    charging_ = false;
+    chargeTimer_ = 0;
     swing_.Stop();
     (void)fx;
 }
@@ -326,7 +351,7 @@ void Enemy::OnParried(FxQueue& fx) {
 
 StrikeResult Enemy::TakeStrike(const PlayerStrike& s, float critMult, FxQueue& fx) {
     StrikeResult r;
-    if (!Alive() || state_ == EState::Dormant) return r;
+    if (!Alive() || state_ == EState::Dormant || state_ == EState::Roar) return r;
     r.landed = true;
     lastHurt_ = now_;
     aggro_ = true;
@@ -369,6 +394,19 @@ StrikeResult Enemy::TakeStrike(const PlayerStrike& s, float critMult, FxQueue& f
         vis_.Play("death", 0.08f, true);
         if (body_) body_->SetEnabled(false);
         fx.push_back({FxType::EnemyDeath, LockPoint(), float(def_->embers), def_->key});
+        return r;
+    }
+    if (def_->brain == "boss" && phase_ == 1 && hp_ < def_->hp * def_->phase2At) {
+        // Phase 2: roar (ignores this hit's posture), snuff the braziers, summon once.
+        phase_ = 2;
+        swing_.Stop();
+        charging_ = false;
+        posture_.Reset();
+        ChangeState(EState::Roar);
+        vis_.Anim().SetSpeedScale(1.0f);
+        vis_.Play("roar", 0.15f, true);
+        fx.push_back({FxType::BossPhase, LockPoint(), 2.0f, def_->key});
+        fx.push_back({FxType::Sound, LockPoint(), 1.0f, "boss_roar"});
         return r;
     }
     if (!r.critical && posture_.Add(s.posture)) {
@@ -473,6 +511,15 @@ void Enemy::Think(const EnemyEnv& env, float dt, FxQueue& fx) {
                 ChangeState(EState::Strafe);
                 break;
             }
+            // The Warden answers distance with a shield charge.
+            cooldown_ -= dt;
+            if (d.brain == "boss" && cooldown_ <= 0 && env.playerAlive) {
+                const EnemyMove* m = PickMove(dist);
+                if (m && m->charge) {
+                    StartAttack(*m, fx);
+                    break;
+                }
+            }
             MoveToward(env.playerPos, d.runSpeed, env, dt);
             vis_.Play("run", 0.18f);
             break;
@@ -515,7 +562,7 @@ void Enemy::Think(const EnemyEnv& env, float dt, FxQueue& fx) {
                     // Close the gap to melee range.
                     vel_ = Vector3Scale(to, d.walkSpeed);
                     vis_.Play("walk", 0.2f);
-                } else if (m && (!env.tokens || env.tokens->Request(id_))) {
+                } else if (m && (d.brain == "boss" || !env.tokens || env.tokens->Request(id_))) {
                     StartAttack(*m, fx);
                 }
             }
@@ -545,6 +592,34 @@ void Enemy::Think(const EnemyEnv& env, float dt, FxQueue& fx) {
                     holdDone_ = true;
                     vis_.Anim().SetSpeedScale(1.0f);
                 }
+            }
+            // Shield charge: after the wind-up, dash forward with the body as the hitbox.
+            if (move_ && move_->charge && holdDone_) {
+                if (!charging_ && chargeTimer_ == 0) {
+                    charging_ = true;
+                    chargeLast_ = pos_;
+                    vis_.Play("charge_run", 0.1f, true);
+                    swing_.Start();
+                    fx.push_back({FxType::Sound, pos_, 1.0f, "boss_roar"});
+                }
+                if (charging_) {
+                    chargeTimer_ += dt;
+                    FaceToward(env.playerPos, dt, 0.25f);
+                    vel_ = Vector3Scale(Facing(), move_->chargeSpeed);
+                    float moved = FlatDist(pos_, chargeLast_);
+                    chargeLast_ = pos_;
+                    bool blocked = chargeTimer_ > 0.25f && moved < move_->chargeSpeed * dt * 0.3f;
+                    if (chargeTimer_ >= move_->chargeTime || blocked) {
+                        charging_ = false;
+                        swing_.Stop();
+                        if (blocked) fx.push_back({FxType::Shake, pos_, 0.6f, ""});
+                        release();
+                        ChangeState(EState::Recover);
+                        vis_.Play("idle", 0.2f);
+                        cooldown_ = d.cooldownMin + (d.cooldownMax - d.cooldownMin) * Rand();
+                    }
+                }
+                break;
             }
             // Lunge between the end of the hold and the hit frame.
             if (holdDone_ && beforeHit && lungeLeft_ > 0 && ai) {
@@ -620,6 +695,12 @@ void Enemy::Think(const EnemyEnv& env, float dt, FxQueue& fx) {
             }
             break;
         }
+        case EState::Roar:
+            if (stateTime_ > 2.2f || vis_.Anim().Finished()) {
+                ChangeState(EState::Strafe);
+                cooldown_ = 0.5f;
+            }
+            break;
         case EState::Dead:
             break;
     }
@@ -654,6 +735,17 @@ void Enemy::Step(const EnemyEnv& env, float dt, FxQueue& fx) {
                 swing_.Start();
                 swingStartedAt_ = now_;
                 fx.push_back({FxType::Swing, pos_, def_->scale, ""});
+                if (move_ && move_->aoe && env.waves) {
+                    Vector3 b, tp;
+                    WeaponPoints(b, tp);
+                    Shockwave w;
+                    w.center = Vector3{tp.x, pos_.y, tp.z};
+                    w.maxRadius = move_->aoeRadius;
+                    w.damage = move_->aoeDamage;
+                    env.waves->push_back(w);
+                    fx.push_back({FxType::Sound, w.center, 1.0f, "slam"});
+                    fx.push_back({FxType::Shake, w.center, 0.8f, ""});
+                }
             }
         } else if (e.name == "hit_end") {
             swing_.Stop();

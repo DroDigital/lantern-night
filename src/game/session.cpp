@@ -70,6 +70,7 @@ void Session::ReloadTunables() {
     player_.LoadTuning(ctx_.data.Get("player/stats.json"));
     for (auto& [k, d] : defs_) {
         std::string file = "enemies/" + k + ".json";
+        if (!ctx_.data.Has(file)) file = "boss/" + k + ".json";
         const json& j = ctx_.data.Get(file);
         d->Load(k, j, ctx_.data.Get(j.value("anims", "")));
     }
@@ -79,6 +80,7 @@ const EnemyDef* Session::Def(const std::string& kind) {
     auto it = defs_.find(kind);
     if (it != defs_.end()) return it->second.get();
     std::string file = "enemies/" + kind + ".json";
+    if (!ctx_.data.Has(file) && ctx_.data.Has("boss/" + kind + ".json")) file = "boss/" + kind + ".json";
     if (!ctx_.data.Has(file)) {
         LK_ERROR("unknown enemy kind '%s'", kind.c_str());
         return nullptr;
@@ -132,6 +134,7 @@ void Session::SpawnEnemies() {
     enemies_.clear();
     for (const auto& p : world_.Zone().enemies) {
         Enemy* e = SpawnEnemy(p.model, Vector3{p.pos.x, p.pos.y, p.pos.z}, p.rot, p.id);
+        if (e && p.extra.value("dormant", false)) e->SetDormant(true);
         if (e && p.extra.contains("patrol")) {
             std::vector<Vector3> pts{Vector3{p.pos.x, p.pos.y, p.pos.z}};
             for (const auto& q : p.extra["patrol"]) pts.push_back(Vector3{q[0].get<float>(), p.pos.y, q[1].get<float>()});
@@ -544,6 +547,7 @@ void Session::ProcessFx() {
             case FxType::Embers: burst("death_embers", e.pos, Vector3{0, 1, 0}, 0.3f * e.strength); break;
             case FxType::Sound: audio.PlayAt(e.name, e.pos, e.strength); break;
             case FxType::Shake: cam_.AddShake(e.strength); break;
+            case FxType::BossPhase: OnBossPhase(e); break;
         }
     }
     fx_.clear();
@@ -588,6 +592,7 @@ void Session::Step(const InputFrame& in, float dt) {
     ee.nav = &nav_;
     ee.tokens = &tokens_;
     ee.spawns = &spawns_;
+    ee.waves = &waves_;
     ee.time = simTime_;
     for (auto& e : enemies_)
         if (e->Alive()) ee.others.push_back(e->Pos());
@@ -595,6 +600,8 @@ void Session::Step(const InputFrame& in, float dt) {
 
     ResolveCombat();
     UpdateProjectiles(dt);
+    UpdateShockwaves(dt);
+    UpdateVictory(dt);
     particles_.Update(dt);
 
     // Embers drifting from the lantern.
@@ -630,7 +637,8 @@ void Session::Step(const InputFrame& in, float dt) {
 
     lock = LockTarget();
     lockPt = lock ? lock->LockPoint() : Vector3{};
-    cam_.Update(dt, player_.Pos(), pin.look, lock ? &lockPt : nullptr, &ctx_.physics);
+    float lockH = lock ? lock->Def().height * lock->Scale() * 0.5f * 2.0f : 1.2f;
+    cam_.Update(dt, player_.Pos(), pin.look, lock ? &lockPt : nullptr, &ctx_.physics, lockH);
     // Ember pile sparkles.
     if (prog_pile_emit(ctx_.state.progress, steps_)) {
         const SaveData& pr = ctx_.state.progress;
@@ -693,6 +701,7 @@ void Session::Render(float alpha, int sw, int sh) {
     if (hudVisible_) {
         RenderHud(sw, sh);
         RenderMenus();
+        RenderVictory();
     }
     if (showDebug_) RenderDebug(sw, sh);
 }

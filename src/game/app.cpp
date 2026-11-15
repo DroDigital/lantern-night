@@ -75,7 +75,7 @@ int App::Run(const AppOptions& opt) {
     if (!opt.animReport.empty()) return RunAnimReport();
     if (opt.selfTest) {
         if (!InitEngine(1280, 720, false)) return 3;
-        int f = RunCombatSelfTest(*ctx_) + RunEnemySelfTest(*ctx_) + RunWorldSelfTest(*ctx_);
+        int f = RunCombatSelfTest(*ctx_) + RunEnemySelfTest(*ctx_) + RunWorldSelfTest(*ctx_) + RunBossSelfTest(*ctx_);
         return f == 0 ? 0 : 1;
     }
     return RunInteractive();
@@ -224,7 +224,7 @@ int App::RunCapture() {
     fs::create_directories(opt_.captureOut, ec);
     std::vector<std::string> scenes;
     if (opt_.captureScene == "all")
-        scenes = {"lighting_full", "lighting_half", "lighting_low", "zone_overview", "combat", "swing", "parry", "hud", "shrine_menu", "death", "enemies"};
+        scenes = {"lighting_full", "lighting_half", "lighting_low", "zone_overview", "combat", "swing", "parry", "hud", "shrine_menu", "death", "enemies", "boss_phase1", "boss_phase2", "victory"};
     if (opt_.captureScene == "all" || opt_.captureScene == "areas")
         for (auto& [name, shot] : data_.Get("capture.json")["shots"].items()) {
             (void)shot;
@@ -251,6 +251,14 @@ int App::RunCapture() {
         if (training) zone = "training.json";
         if (scene == "enemies") zone = "arena.json";
         if (scene == "editor") zone = "zone.json";
+        bool bossScene = scene == "boss_phase1" || scene == "boss_phase2" || scene == "victory";
+        if (bossScene) {
+            zone = "zone.json";
+            state_.progress.defeatedBosses.insert("twin_blades");
+            state_.progress.litShrines.insert("shrine_warden");
+            state_.progress.lastShrine = "shrine_warden";
+            state_.godMode = true;
+        }
         const json& shots = data_.Get("capture.json")["shots"];
         const json* shot = shots.contains(scene) ? &shots[scene] : nullptr;
         if (shot) zone = shot->value("zone", zone);
@@ -300,6 +308,28 @@ int App::RunCapture() {
             session_->GetPlayer().Teleport(p, yaw);
             session_->Camera().Reset(p, yaw * DEG2RAD + PI);
             frames = shot->value("frames", frames);
+        }
+        if (bossScene) {
+            session_->DebugEnterFog();
+            Enemy* b = session_->Boss();
+            if (b) session_->ForceLock(b->Id());
+            for (int k = 0; k < 150; ++k) {
+                InputFrame in;
+                if (k < 60) in.move = {0.0f, 0.8f};  // step into the arena
+                input_.PushScripted(in);
+                session_->Advance(1.0f / 60.0f);
+            }
+            if (b && scene != "boss_phase1") {
+                session_->DebugStrike(b, b->HpMax() * 0.55f, 0);
+                for (int k = 0; k < 160; ++k) {
+                    input_.PushScripted(InputFrame{});
+                    session_->Advance(1.0f / 60.0f);
+                }
+            }
+            if (b && scene == "victory") session_->DebugStrike(b, b->HpMax(), 0);
+            if (b && b->Alive()) session_->ForceLock(b->Id());
+            frames = scene == "victory" ? 150 : 40;
+            state_.godMode = false;
         }
         if (scene == "death") {
             FxQueue fx;
@@ -383,7 +413,7 @@ int App::PreloadEverything() {
 
 int App::RunSmoke() {
     if (!InitEngine(1280, 720, false)) return 3;
-    if (RunCombatSelfTest(*ctx_) + RunEnemySelfTest(*ctx_) + RunWorldSelfTest(*ctx_) != 0) {
+    if (RunCombatSelfTest(*ctx_) + RunEnemySelfTest(*ctx_) + RunWorldSelfTest(*ctx_) + RunBossSelfTest(*ctx_) != 0) {
         LK_ERROR("smoke: self-test failed");
         return 1;
     }

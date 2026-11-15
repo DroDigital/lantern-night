@@ -68,5 +68,14 @@
 ### Known issues
 - Rooms are sparsely decorated; more props come with the balance pass.
 
+## M5 Boss: done
+- The Hollow Warden (`data/boss/hollow_warden.json`, `data/anims/hollow_warden.json`): Skeleton Warrior x2.5, 1,500 HP, boss bar with his name.
+  - Phase 1: sweeping two-hit combo, overhead slam (0.9 s telegraph) that sends an expanding ground shockwave (roll through it; it cannot be blocked or parried), shield charge when the knight keeps their distance.
+  - Phase 2 (below 50%): roars (ignores hits while roaring), snuffs every arena brazier so only the lantern lights the fight, summons three minions once, adds a delayed slam with a 1.35 to 1.75 s hold.
+- Fog gate: interact to pass through; the fight starts (boss music), the fog seals until victory. Dying resets the Warden to full health in phase 1, relights the arena and removes the adds.
+- Victory: braziers relight, "FLAME REKINDLED", +2 Vigor (the Warden's ember) and his 3,000 embers, the fog lifts, the save is marked cleared, then scrolling credits.
+- Camera: lock-on pulls back and up for big targets; when walls squeeze the camera it tilts up to look over the knight.
+- Boss self-test: dormant until the fog, sweep/slam/shockwave/charge in phase 1, phase 2 snuff + 3 summons + delayed slam, reset on death, victory state. Captures: `boss_phase1`, `boss_phase2`, `victory`.
+
 ## Next
-- M5 Boss: the Hollow Warden, fog gate, both phases, victory.
+- M6 Polish and ship: audio pass, settings menu, title screen with version, balance pass, README, v0.1.0 release.

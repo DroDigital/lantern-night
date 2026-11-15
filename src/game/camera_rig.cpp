@@ -49,7 +49,8 @@ void CameraRig::Reset(Vector3 target, float yawRad) {
 Vector3 CameraRig::Forward() const { return Vector3{-std::sin(yaw_), 0, -std::cos(yaw_)}; }
 Vector3 CameraRig::Right() const { return Vector3{std::cos(yaw_), 0, -std::sin(yaw_)}; }
 
-void CameraRig::Update(float dt, Vector3 followPos, Vector2 look, const Vector3* lockTarget, const Physics* physics) {
+void CameraRig::Update(float dt, Vector3 followPos, Vector2 look, const Vector3* lockTarget, const Physics* physics, float lockHeight) {
+    float big = std::max(0.0f, lockHeight - 1.4f);
     Vector3 desiredPivot = Vector3Add(followPos, Vector3{0, tuning.pivotHeight, 0});
     pivot_ = dt > 0 ? Vector3Lerp(pivot_, desiredPivot, Damp(tuning.followSharpness, dt)) : desiredPivot;
 
@@ -60,7 +61,7 @@ void CameraRig::Update(float dt, Vector3 followPos, Vector2 look, const Vector3*
         float dy = WrapAngle(wantYaw - yaw_);
         yaw_ = WrapAngle(yaw_ + dy * Damp(tuning.lockonTurn, dt));
         float flat = std::sqrt(to.x * to.x + to.z * to.z);
-        float wantPitch = tuning.lockonPitch * DEG2RAD + std::atan2(-to.y, std::max(flat, 1.0f)) * 0.5f;
+        float wantPitch = (tuning.lockonPitch + big * 4.0f) * DEG2RAD + std::atan2(-to.y, std::max(flat, 1.0f)) * 0.5f;
         pitch_ += (wantPitch - pitch_) * Damp(tuning.lockonTurn * 0.5f, dt);
     } else {
         yaw_ = WrapAngle(yaw_ - look.x);
@@ -75,7 +76,7 @@ void CameraRig::Update(float dt, Vector3 followPos, Vector2 look, const Vector3*
     Vector3 side = Vector3Scale(Right(), shoulder_);
     Vector3 basePivot = pivot_;
     pivot_ = Vector3Add(pivot_, side);
-    float dist = lockTarget ? tuning.lockonDistance : tuning.distance;
+    float dist = lockTarget ? tuning.lockonDistance + big * 1.6f : tuning.distance;
     float want = dist;
     if (physics) {
         Vector3 far = Vector3Add(pivot_, Vector3Scale(back, dist));
@@ -86,9 +87,25 @@ void CameraRig::Update(float dt, Vector3 followPos, Vector2 look, const Vector3*
     else if (want < curDist_) curDist_ += (want - curDist_) * Damp(tuning.collisionIn, dt);
     else curDist_ += (want - curDist_) * Damp(tuning.collisionOut, dt);
 
+    // Squeezed against a wall: tilt up and look over the knight instead of hugging their back.
+    float squeeze = std::clamp((dist - curDist_) / std::max(dist, 0.01f), 0.0f, 1.0f);
+    squeeze_ += (squeeze - squeeze_) * (dt > 0 ? Damp(5.0f, dt) : 1.0f);
+    if (squeeze_ > 0.01f) {
+        float p2 = std::min(pitch_ + squeeze_ * 40.0f * DEG2RAD, 75.0f * DEG2RAD);
+        Vector3 back2{std::sin(yaw_) * std::cos(p2), std::sin(p2), std::cos(yaw_) * std::cos(p2)};
+        float d2 = dist;
+        if (physics) {
+            RayHit h2 = physics->SphereCast(basePivot, Vector3Add(pivot_, Vector3Scale(back2, dist)), tuning.collisionRadius);
+            if (h2.hit) d2 = std::max(tuning.minDistance, dist * h2.fraction - 0.05f);
+        }
+        if (d2 > curDist_) {
+            back = back2;
+            curDist_ += (d2 - curDist_) * (dt > 0 ? Damp(tuning.collisionOut * 2.0f, dt) : 1.0f);
+        }
+    }
     Vector3 pos = Vector3Add(pivot_, Vector3Scale(back, curDist_));
     Vector3 target = pivot_;
-    if (lockTarget) target = Vector3Lerp(pivot_, *lockTarget, 0.25f);
+    if (lockTarget) target = Vector3Lerp(pivot_, *lockTarget, big > 0 ? 0.35f : 0.25f);
 
     shakeTime_ += dt;
     shake_ = std::max(0.0f, shake_ - tuning.shakeDecay * dt * shake_ - dt * 0.2f);

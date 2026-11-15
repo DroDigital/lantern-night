@@ -88,6 +88,7 @@ Vector3 Session::RespawnPoint(float* yawDeg) const {
 }
 
 void Session::RespawnWorld() {
+    ResetBossFight();
     const SaveData& p = ctx_.state.progress;
     for (auto& e : enemies_) {
         const std::string& group = e->Def().bossGroup;

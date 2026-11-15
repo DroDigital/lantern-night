@@ -2,6 +2,7 @@
 
 #include <cmath>
 #include <functional>
+#include <map>
 #include <memory>
 
 #include "engine/input.h"
@@ -458,6 +459,120 @@ int RunWorldSelfTest(Ctx& ctx) {
     ctx.state.godMode = god;
     ctx.input.SetScripted(false);
     LK_INFO("selftest (world): %d failures", failures);
+    return failures;
+}
+
+}  // namespace lk
+
+namespace lk {
+
+// ------------------------------------------------------------------ boss (M5)
+int RunBossSelfTest(Ctx& ctx) {
+    Harness h(ctx);
+    ctx.input.SetScripted(true);
+    int failures = 0;
+    auto check = [&](bool ok, const char* what) {
+        if (ok) LK_INFO("selftest: PASS %s", what);
+        else {
+            LK_ERROR("selftest: FAIL %s", what);
+            ++failures;
+        }
+    };
+    SaveData saved = ctx.state.progress;
+    bool god = ctx.state.godMode;
+    ctx.state.ResetProgress();
+    ctx.state.progress.litShrines.insert("shrine_warden");
+    ctx.state.progress.lastShrine = "shrine_warden";
+    ctx.state.progress.defeatedBosses.insert("twin_blades");
+    ctx.state.godMode = true;
+    h.s = std::make_unique<Session>(ctx);
+    if (!h.s->Load("zone.json")) return 1;
+    Enemy* boss = h.s->Boss();
+    check(boss && boss->State() == EState::Dormant, "the Warden waits dormant behind the fog");
+    if (!boss) return failures;
+    auto arenaLit = [&]() {
+        int lit = 0;
+        for (auto& b : h.s->Braziers())
+            if (b.arena && b.lit && !b.snuffed) ++lit;
+        return lit;
+    };
+    check(arenaLit() == 4, "arena braziers burn before the fight");
+
+    h.s->DebugEnterFog();
+    h.Run(30);
+    check(ctx.state.inBossFight && boss->Aggro(), "passing the fog gate starts the fight");
+    check(h.s->GetBossBar().active && h.s->GetBossBar().name == "The Hollow Warden", "boss bar shows his name");
+
+    // Phase 1 attacks: run and watch for a slam shockwave or a charge.
+    bool sawWave = false, sawCharge = false, sawSweep = false;
+    std::map<std::string, int> picked;
+    const EnemyMove* lastMove = nullptr;
+    h.Run(1500, [&](int) {
+        static EState lastState = EState::Idle;
+        if (boss->State() == EState::Attack && (lastState != EState::Attack || boss->CurrentMove() != lastMove) && boss->CurrentMove())
+            picked[boss->CurrentMove()->name]++;
+        lastState = boss->State();
+        lastMove = boss->CurrentMove();
+        sawWave = sawWave || !h.s->Waves().empty();
+        sawCharge = sawCharge || boss->ChargeActive();
+        sawSweep = sawSweep || (boss->CurrentMove() && boss->CurrentMove()->name == "sweep" && boss->State() == EState::Attack);
+        return InputFrame{};
+    });
+    check(sawSweep, "phase 1: sweeping combo");
+    check(sawWave, "phase 1: overhead slam sends a shockwave");
+    check(sawCharge, "phase 1: shield charge when the knight keeps away");
+    LK_INFO("selftest: boss charge observed: %s", sawCharge ? "yes" : "no");
+    for (auto& [n, c] : picked) LK_INFO("selftest: boss move %s x%d", n.c_str(), c);
+    LK_INFO("selftest: boss state %s dist %.1f", EStateName(boss->State()), Vector3Distance(boss->Pos(), h.s->PlayerPos()));
+
+    // Phase 2 below 50%.
+    h.s->DebugStrike(boss, boss->HpMax() * 0.55f, 0);
+    h.Run(10);
+    check(boss->Phase() == 2, "below 50% the Warden enters phase 2");
+    check(arenaLit() == 0, "phase 2 snuffs every arena brazier");
+    int summons = 0;
+    for (auto& e : h.s->Enemies())
+        if (e->SpawnId().rfind("summon_", 0) == 0) ++summons;
+    check(summons == 3, "phase 2 summons three minions");
+    bool sawDelayed = false;
+    h.Run(1500, [&](int) {
+        sawDelayed = sawDelayed || (boss->CurrentMove() && boss->CurrentMove()->name == "slam_delayed");
+        return InputFrame{};
+    });
+    check(sawDelayed, "phase 2 adds the delayed slam");
+
+    // Dying resets the fight.
+    FxQueue fx;
+    h.s->GetPlayer().Kill(fx);
+    h.Run(300);
+    summons = 0;
+    for (auto& e : h.s->Enemies())
+        if (e->SpawnId().rfind("summon_", 0) == 0) ++summons;
+    check(!ctx.state.inBossFight && boss->Hp() == boss->HpMax() && boss->Phase() == 1 && boss->State() == EState::Dormant,
+          "dying resets the Warden");
+    check(arenaLit() == 4 && summons == 0, "reset relights the arena and removes the adds");
+
+    // Victory.
+    h.s->DebugEnterFog();
+    h.Run(10);
+    h.s->DebugStrike(boss, boss->HpMax() * 0.6f, 0);
+    h.Run(200);  // phase 2 roar (strikes are ignored while he roars)
+    h.s->DebugStrike(boss, boss->HpMax(), 0);
+    h.Run(20);
+    check(ctx.state.progress.defeatedBosses.count("hollow_warden") > 0, "Warden defeat is recorded");
+    check(h.s->VictoryShown(), "FLAME REKINDLED banner");
+    check(arenaLit() == 4, "victory relights the braziers");
+    Gate* fog = h.s->FindGate("fog_gate");
+    check(fog && fog->open, "the fog lifts");
+    check(ctx.state.progress.gameCleared, "game marked cleared");
+    check(!ctx.state.inBossFight, "fight over");
+
+    h.s.reset();
+    ctx.state.progress = saved;
+    ctx.state.godMode = god;
+    ctx.state.inBossFight = false;
+    ctx.input.SetScripted(false);
+    LK_INFO("selftest (boss): %d failures", failures);
     return failures;
 }
 
