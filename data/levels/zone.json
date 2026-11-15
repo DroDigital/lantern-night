@@ -1375,6 +1375,599 @@
    ],
    "rot": 0,
    "collide": true
+  },
+  {
+   "model": "kaykit_dungeon/coin_stack_small.gltf.glb",
+   "pos": [
+    45.26,
+    0.0,
+    4.38
+   ],
+   "rot": 237,
+   "collide": false
+  },
+  {
+   "model": "kaykit_dungeon/sword_shield_broken.gltf.glb",
+   "pos": [
+    68.91,
+    0.0,
+    6.38
+   ],
+   "rot": 146,
+   "collide": false
+  },
+  {
+   "model": "quaternius_props/Vase_Rubble_Medium.gltf",
+   "pos": [
+    71.28,
+    0.0,
+    6.38
+   ],
+   "rot": 327,
+   "collide": false,
+   "scale": 1.4
+  },
+  {
+   "model": "quaternius_props/CandleStick_Triple.gltf",
+   "pos": [
+    66.38,
+    0.0,
+    9.37
+   ],
+   "rot": 156,
+   "collide": false,
+   "scale": 1.4
+  },
+  {
+   "model": "kaykit_dungeon/keg_decorated.gltf.glb",
+   "pos": [
+    66.5,
+    0.0,
+    17.5
+   ],
+   "rot": 31,
+   "collide": true
+  },
+  {
+   "model": "quaternius_props/CandleStick_Triple.gltf",
+   "pos": [
+    75.35,
+    0.0,
+    17.62
+   ],
+   "rot": 12,
+   "collide": false,
+   "scale": 1.4
+  },
+  {
+   "model": "kaykit_dungeon/shelf_small_candles.gltf.glb",
+   "pos": [
+    77.5,
+    0.0,
+    17.5
+   ],
+   "rot": 132,
+   "collide": true
+  },
+  {
+   "model": "kaykit_dungeon/rubble_half.gltf.glb",
+   "pos": [
+    36.5,
+    0.0,
+    23.5
+   ],
+   "rot": 53,
+   "collide": true
+  },
+  {
+   "model": "kaykit_dungeon/shelf_small_candles.gltf.glb",
+   "pos": [
+    63.5,
+    0.0,
+    23.5
+   ],
+   "rot": 308,
+   "collide": true
+  },
+  {
+   "model": "kaykit_dungeon/sword_shield_broken.gltf.glb",
+   "pos": [
+    46.38,
+    0.0,
+    24.83
+   ],
+   "rot": 290,
+   "collide": false
+  },
+  {
+   "model": "quaternius_props/Vase_2.gltf",
+   "pos": [
+    51.62,
+    0.0,
+    24.51
+   ],
+   "rot": 172,
+   "collide": false,
+   "scale": 1.4
+  },
+  {
+   "model": "quaternius_props/Chain_Coil.gltf",
+   "pos": [
+    51.62,
+    0.0,
+    27.16
+   ],
+   "rot": 347,
+   "collide": false,
+   "scale": 1.4
+  },
+  {
+   "model": "kaykit_dungeon/sword_shield_broken.gltf.glb",
+   "pos": [
+    46.38,
+    0.0,
+    29.17
+   ],
+   "rot": 60,
+   "collide": false
+  },
+  {
+   "model": "quaternius_props/Book_Stack_1.gltf",
+   "pos": [
+    6.98,
+    2.0,
+    8.38
+   ],
+   "rot": 41,
+   "collide": false,
+   "scale": 1.4
+  },
+  {
+   "model": "kaykit_dungeon/rubble_half.gltf.glb",
+   "pos": [
+    25.5,
+    2.0,
+    8.5
+   ],
+   "rot": 93,
+   "collide": true
+  },
+  {
+   "model": "kaykit_dungeon/plate_stack.gltf.glb",
+   "pos": [
+    4.38,
+    2.0,
+    10.52
+   ],
+   "rot": 163,
+   "collide": false
+  },
+  {
+   "model": "quaternius_props/Book_Stack_1.gltf",
+   "pos": [
+    4.38,
+    2.0,
+    18.72
+   ],
+   "rot": 183,
+   "collide": false,
+   "scale": 1.4
+  },
+  {
+   "model": "kaykit_dungeon/shelf_small_candles.gltf.glb",
+   "pos": [
+    92.5,
+    2.0,
+    18.5
+   ],
+   "rot": 36,
+   "collide": true
+  },
+  {
+   "model": "quaternius_props/Vase_2.gltf",
+   "pos": [
+    25.62,
+    2.0,
+    20.71
+   ],
+   "rot": 192,
+   "collide": false,
+   "scale": 1.4
+  },
+  {
+   "model": "quaternius_props/Bucket_Wooden_1.gltf",
+   "pos": [
+    7.07,
+    2.0,
+    23.62
+   ],
+   "rot": 352,
+   "collide": false,
+   "scale": 1.4
+  },
+  {
+   "model": "quaternius_props/Bucket_Wooden_1.gltf",
+   "pos": [
+    10.81,
+    2.0,
+    23.62
+   ],
+   "rot": 86,
+   "collide": false,
+   "scale": 1.4
+  },
+  {
+   "model": "quaternius_props/Chain_Coil.gltf",
+   "pos": [
+    21.34,
+    2.0,
+    23.62
+   ],
+   "rot": 5,
+   "collide": false,
+   "scale": 1.4
+  },
+  {
+   "model": "kaykit_dungeon/trunk_medium_A.gltf.glb",
+   "pos": [
+    92.5,
+    2.0,
+    23.5
+   ],
+   "rot": 102,
+   "collide": true
+  },
+  {
+   "model": "quaternius_props/Chain_Coil.gltf",
+   "pos": [
+    105.04,
+    2.0,
+    23.62
+   ],
+   "rot": 3,
+   "collide": false,
+   "scale": 1.4
+  },
+  {
+   "model": "kaykit_dungeon/crates_stacked.gltf.glb",
+   "pos": [
+    107.5,
+    2.0,
+    23.5
+   ],
+   "rot": 289,
+   "collide": true
+  },
+  {
+   "model": "kaykit_dungeon/plate_stack.gltf.glb",
+   "pos": [
+    17.62,
+    2.0,
+    27.14
+   ],
+   "rot": 121,
+   "collide": false
+  },
+  {
+   "model": "kaykit_dungeon/trunk_medium_A.gltf.glb",
+   "pos": [
+    90.5,
+    2.0,
+    28.5
+   ],
+   "rot": 198,
+   "collide": true
+  },
+  {
+   "model": "kaykit_dungeon/candle_triple.gltf.glb",
+   "pos": [
+    92.71,
+    2.0,
+    28.38
+   ],
+   "rot": 334,
+   "collide": false
+  },
+  {
+   "model": "kaykit_dungeon/bottle_A_brown.gltf.glb",
+   "pos": [
+    105.37,
+    2.0,
+    28.38
+   ],
+   "rot": 60,
+   "collide": false
+  },
+  {
+   "model": "quaternius_props/Chain_Coil.gltf",
+   "pos": [
+    107.5,
+    2.0,
+    28.38
+   ],
+   "rot": 257,
+   "collide": false,
+   "scale": 1.4
+  },
+  {
+   "model": "kaykit_dungeon/trunk_medium_A.gltf.glb",
+   "pos": [
+    4.5,
+    2.0,
+    30.5
+   ],
+   "rot": 78,
+   "collide": true
+  },
+  {
+   "model": "quaternius_props/Book_Stack_1.gltf",
+   "pos": [
+    20.7,
+    2.0,
+    30.38
+   ],
+   "rot": 169,
+   "collide": false,
+   "scale": 1.4
+  },
+  {
+   "model": "kaykit_dungeon/bottle_A_brown.gltf.glb",
+   "pos": [
+    23.05,
+    2.0,
+    30.38
+   ],
+   "rot": 276,
+   "collide": false
+  },
+  {
+   "model": "quaternius_props/Vase_2.gltf",
+   "pos": [
+    90.38,
+    2.0,
+    30.51
+   ],
+   "rot": 162,
+   "collide": false,
+   "scale": 1.4
+  },
+  {
+   "model": "kaykit_dungeon/sword_shield_broken.gltf.glb",
+   "pos": [
+    25.62,
+    2.0,
+    33.21
+   ],
+   "rot": 142,
+   "collide": false
+  },
+  {
+   "model": "quaternius_props/CandleStick_Triple.gltf",
+   "pos": [
+    4.38,
+    2.0,
+    37.11
+   ],
+   "rot": 38,
+   "collide": false,
+   "scale": 1.4
+  },
+  {
+   "model": "quaternius_props/Vase_Rubble_Medium.gltf",
+   "pos": [
+    25.62,
+    2.0,
+    43.02
+   ],
+   "rot": 173,
+   "collide": false,
+   "scale": 1.4
+  },
+  {
+   "model": "kaykit_dungeon/rubble_half.gltf.glb",
+   "pos": [
+    4.5,
+    2.0,
+    45.5
+   ],
+   "rot": 189,
+   "collide": true
+  },
+  {
+   "model": "quaternius_props/Vase_2.gltf",
+   "pos": [
+    8.99,
+    2.0,
+    45.62
+   ],
+   "rot": 108,
+   "collide": false,
+   "scale": 1.4
+  },
+  {
+   "model": "kaykit_dungeon/barrel_large.gltf.glb",
+   "pos": [
+    25.5,
+    2.0,
+    45.5
+   ],
+   "rot": 59,
+   "collide": true
+  },
+  {
+   "model": "quaternius_props/Book_Stack_1.gltf",
+   "pos": [
+    15.62,
+    2.0,
+    48.94
+   ],
+   "rot": 185,
+   "collide": false,
+   "scale": 1.4
+  },
+  {
+   "model": "kaykit_dungeon/shelf_small_candles.gltf.glb",
+   "pos": [
+    90.5,
+    2.0,
+    49.5
+   ],
+   "rot": 164,
+   "collide": true
+  },
+  {
+   "model": "kaykit_dungeon/box_small.gltf.glb",
+   "pos": [
+    92.55,
+    2.0,
+    49.62
+   ],
+   "rot": 260,
+   "collide": false
+  },
+  {
+   "model": "kaykit_dungeon/candle_melted.gltf.glb",
+   "pos": [
+    107.48,
+    2.0,
+    49.62
+   ],
+   "rot": 59,
+   "collide": false
+  },
+  {
+   "model": "quaternius_props/Scroll_2.gltf",
+   "pos": [
+    15.62,
+    2.0,
+    52.68
+   ],
+   "rot": 223,
+   "collide": false,
+   "scale": 1.4
+  },
+  {
+   "model": "kaykit_dungeon/bottle_A_brown.gltf.glb",
+   "pos": [
+    95.05,
+    2.0,
+    54.38
+   ],
+   "rot": 164,
+   "collide": false
+  },
+  {
+   "model": "quaternius_props/Scroll_2.gltf",
+   "pos": [
+    97.36,
+    2.0,
+    54.38
+   ],
+   "rot": 303,
+   "collide": false,
+   "scale": 1.4
+  },
+  {
+   "model": "quaternius_props/Vase_Rubble_Medium.gltf",
+   "pos": [
+    10.38,
+    2.0,
+    56.72
+   ],
+   "rot": 279,
+   "collide": false,
+   "scale": 1.4
+  },
+  {
+   "model": "kaykit_dungeon/candle_triple.gltf.glb",
+   "pos": [
+    109.62,
+    2.0,
+    57.23
+   ],
+   "rot": 32,
+   "collide": false
+  },
+  {
+   "model": "kaykit_dungeon/plate_stack.gltf.glb",
+   "pos": [
+    109.62,
+    2.0,
+    59.48
+   ],
+   "rot": 47,
+   "collide": false
+  },
+  {
+   "model": "kaykit_dungeon/box_small.gltf.glb",
+   "pos": [
+    109.62,
+    2.0,
+    61.45
+   ],
+   "rot": 230,
+   "collide": false
+  },
+  {
+   "model": "kaykit_dungeon/candle_triple.gltf.glb",
+   "pos": [
+    8.38,
+    2.0,
+    64.63
+   ],
+   "rot": 214,
+   "collide": false
+  },
+  {
+   "model": "quaternius_props/CandleStick_Triple.gltf",
+   "pos": [
+    17.62,
+    2.0,
+    64.77
+   ],
+   "rot": 162,
+   "collide": false,
+   "scale": 1.4
+  },
+  {
+   "model": "kaykit_dungeon/candle_triple.gltf.glb",
+   "pos": [
+    10.71,
+    2.0,
+    67.62
+   ],
+   "rot": 20,
+   "collide": false
+  },
+  {
+   "model": "kaykit_dungeon/barrel_small_stack.gltf.glb",
+   "pos": [
+    90.5,
+    2.0,
+    69.5
+   ],
+   "rot": 18,
+   "collide": true
+  },
+  {
+   "model": "kaykit_dungeon/coin_stack_small.gltf.glb",
+   "pos": [
+    94.72,
+    2.0,
+    69.62
+   ],
+   "rot": 295,
+   "collide": false
+  },
+  {
+   "model": "kaykit_dungeon/rubble_half.gltf.glb",
+   "pos": [
+    109.5,
+    2.0,
+    69.5
+   ],
+   "rot": 53,
+   "collide": true
   }
  ]
 }

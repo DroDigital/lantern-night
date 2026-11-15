@@ -20,6 +20,18 @@ Grab the archive for your OS from the [Releases](../../releases) page (or the la
 
 No installer or runtime is required. Controls are in `packaging/README.txt` (shipped as README.txt).
 
+The title screen shows the version and offers Continue, New game, Settings and Quit. Settings
+(volumes, camera shake, sensitivity, invert X/Y, fullscreen, resolution, vsync, lantern shadows)
+are also in the pause menu and are saved per user next to the save file:
+
+| OS | Saves and settings |
+|---|---|
+| Windows | `%APPDATA%\LanternKnight` |
+| macOS | `~/Library/Application Support/LanternKnight` |
+| Linux | `$XDG_DATA_HOME/lantern-knight` (default `~/.local/share/lantern-knight`) |
+
+Releases are built by CI when a `v*` tag is pushed; the release page carries all three archives.
+
 ## Build from source
 
 Requirements: CMake 3.24+, a C++20 compiler (MSVC 2022, Xcode 14+, GCC 11+/Clang 14+), Git.
@@ -54,9 +66,10 @@ cmake --build --preset release --target package_game
 |---|---|
 | `LanternKnight --validate` | Parses every glTF and data file (no window). |
 | `LanternKnight --smoke-test` | Combat self-test, then a scripted 3,600-step run; non-zero exit on any error. |
-| `LanternKnight --selftest` | Deterministic combat checks only (hits, combo, block, parry, roll, riposte, buffer). |
+| `LanternKnight --selftest` | Deterministic checks only: combat, enemies, world (gates, braziers, pickups, persistence) and the boss. |
 | `LanternKnight --anim-report docs/anim_timing.md` | Measures attack swing windows from the clips. |
-| `LanternKnight --capture all --frames 90 --out shots` | Renders the capture scenes and saves PNGs. |
+| `LanternKnight --capture all --frames 90 --out shots` | Renders the capture scenes and saves PNGs (`menus`, `areas` or one scene name also work). |
+| `LanternKnight --user-dir DIR` | Uses DIR for the save and settings instead of the per-user folder. |
 | `asset_report assets docs/asset_report.md` | Regenerates the asset report. |
 
 ## Repository layout

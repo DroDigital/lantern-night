@@ -263,10 +263,14 @@ void Session::RenderMenus() {
         if (ui.MovedFocus()) ctx_.audio.Play("ui_move");
     } else if (menu_ == Menu::Pause) {
         MenuAction a = DrawPauseMenu(ui);
-        if (a == MenuAction::Resume) menu_ = Menu::None;
+        if (a == MenuAction::Resume) {
+            menu_ = Menu::None;
+            ctx_.audio.Play("ui_back");
+        }
         if (a == MenuAction::Settings) {
             menu_ = Menu::Settings;
             ui.ResetFocus();
+            ctx_.audio.Play("ui_confirm");
         }
         if (a == MenuAction::QuitToDesktop) {
             SaveProgress();
@@ -286,6 +290,7 @@ void Session::RenderMenus() {
         if (a == MenuAction::Close) {
             menu_ = Menu::Pause;
             ui.ResetFocus();
+            ctx_.audio.Play("ui_back");
         }
         if (ui.MovedFocus()) ctx_.audio.Play("ui_move");
     }

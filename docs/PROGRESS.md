@@ -36,7 +36,7 @@
 - `--smoke-test` now does everything the spec lists: combat self-test, loads every model/texture and decodes every sound, validates all data, then a bot drives the knight in god mode (kill an enemy, light and rest at a shrine, save, read the save back and compare, rebuild the session from disk, wander the nav graph) for 3,600 fixed steps; fails on any error, missing asset, NaN position or save mismatch.
 
 ### Known issues
-- The settings entry in the pause menu is a placeholder until M6.
+- The settings entry in the pause menu is a placeholder until M6 (resolved in M6).
 
 ## M3 Enemies: done
 - Four skeleton types, all data-driven (`data/enemies/*.json`, `data/anims/skeleton_*.json`):
@@ -69,7 +69,7 @@
 - Rooms are sparsely decorated; more props come with the balance pass.
 
 ## M5 Boss: done
-- The Hollow Warden (`data/boss/hollow_warden.json`, `data/anims/hollow_warden.json`): Skeleton Warrior x2.5, 1,500 HP, boss bar with his name.
+- The Hollow Warden (`data/boss/hollow_warden.json`, `data/anims/hollow_warden.json`): Skeleton Warrior x2.5, 1,100 HP (1,500 before the M6 balance pass), boss bar with his name.
   - Phase 1: sweeping two-hit combo, overhead slam (0.9 s telegraph) that sends an expanding ground shockwave (roll through it; it cannot be blocked or parried), shield charge when the knight keeps their distance.
   - Phase 2 (below 50%): roars (ignores hits while roaring), snuffs every arena brazier so only the lantern lights the fight, summons three minions once, adds a delayed slam with a 1.35 to 1.75 s hold.
 - Fog gate: interact to pass through; the fight starts (boss music), the fog seals until victory. Dying resets the Warden to full health in phase 1, relights the arena and removes the adds.
@@ -77,5 +77,21 @@
 - Camera: lock-on pulls back and up for big targets; when walls squeeze the camera it tilts up to look over the knight.
 - Boss self-test: dormant until the fog, sweep/slam/shockwave/charge in phase 1, phase 2 snuff + 3 summons + delayed slam, reset on death, victory state. Captures: `boss_phase1`, `boss_phase2`, `victory`.
 
+## M6 Polish and ship: done
+- Title screen: the zone behind a slow orbit camera, Continue / New game / Settings / Quit, the build version (`git describe`) in the corner.
+- Settings (`src/game/settings.*`, `settings.json` in the per-user folder): master/music/effects volume, camera shake, sensitivity, invert X/Y, fullscreen (borderless), resolution, vsync, lantern shadows. Reachable from the title and pause menus; applied immediately and saved.
+- Lantern shadows: an R32F distance cube map rendered from the lantern each frame (walls, props, enemies cast; the knight, who holds the light, does not), 4-tap PCF in the lit shader. Off by default; the setting turns it on.
+- Audio: every sound referenced by the game exists in `data/audio.json` (checked), menu move/confirm/back sounds, positional SFX, ambient/boss music crossfades, lantern crackle loop at low flame.
+- Particles (built in M1 to M5): lantern embers, hit and block sparks, brazier fire, mage bolt tails, death bursts, ember piles; weapon ribbon trails.
+- Dressing pass: `build_zone.py` adds 57 deterministic props (low clutter along walls, barrels/crates/kegs/trunks in room corners) away from interactables, stairs and the boss arena.
+- Balance pass: the Hollow Warden drops from 1,500 to 1,100 HP (about 70 light hits instead of 94, fewer with Might levels and ripostes); the other numbers held up in the self-tests and captures.
+- App icons (Windows .ico in the exe, macOS .icns in the bundle, Linux .png + .desktop), README with download and launch steps per OS, `v0.1.0` tag with a GitHub Release carrying the Windows, macOS and Linux archives.
+
+### Known issues
+- Gamepad feel and the overall difficulty were tuned from data, captures and scripted runs; no human playtest happened in the build environment.
+- macOS builds are ad-hoc signed unless the `APPLE_*` secrets are configured, so Gatekeeper asks once (see README).
+- Lantern shadows cost six extra scene passes over nearby geometry; they are off by default.
+
 ## Next
-- M6 Polish and ship: audio pass, settings menu, title screen with version, balance pass, README, v0.1.0 release.
+- Playtest-driven tuning of enemy timings and boss damage.
+- More dressing variety (wall banners and bones) and a second weapon moveset.

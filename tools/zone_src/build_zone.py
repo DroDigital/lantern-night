@@ -276,6 +276,86 @@ zone["props"] = [
     prop(K + "pillar_decorated.gltf.glb", 46, 5, 1), prop(K + "pillar_decorated.gltf.glb", 53, 5, 1),
 ]
 
+# ------------------------------------------------------------------ dressing
+# Deterministic clutter: low props along walls (no collision) and bigger ones in room corners
+# (with collision). Picks come from a fixed hash of the cell, so re-running gives the same zone.
+# Cells near anything the player interacts with, stairs and the boss arena stay clear.
+def cell_of(pos):
+    return int(pos[0] // CELL), int(pos[2] // CELL), int(round(pos[1] / LH))
+
+keep_clear = set()
+def clear_around(pos, r=1):
+    cx, cz, lv = cell_of(pos)
+    for dz in range(-r, r + 1):
+        for dx in range(-r, r + 1):
+            keep_clear.add((cx + dx, cz + dz, lv))
+
+for group in ("shrines", "braziers", "gates", "items"):
+    for m in zone[group]:
+        clear_around(m["pos"])
+clear_around(zone["fog_gate"]["pos"], 2)
+clear_around(zone["player_spawn"]["pos"], 1)
+for h in zone["hints"]:
+    clear_around(h["pos"], 0)
+for e in zone["enemies"]:
+    clear_around(e["pos"], 0)
+for pr in zone["props"]:
+    clear_around(pr["pos"], 0)
+for (z, x) in [(6, 17), (18, 16), (18, 43), (30, 43)]:   # stairs and their landings
+    for lv in (0, 1):
+        for dz in (-1, 0, 1):
+            for dx in (-2, -1, 0, 1, 2):
+                keep_clear.add((x + dx, z + dz, lv))
+for z in range(0, 9):                                       # boss arena: keep the floor open
+    for x in range(43, 57):
+        keep_clear.add((x, z, 1))
+
+def hval(x, z, lv, salt=0):
+    return ((x * 73856093) ^ (z * 19349663) ^ (lv * 83492791) ^ (salt * 2654435761)) % 1000
+
+WALL_PROPS = [(K + "candle_triple.gltf.glb", 1.0), (K + "candle_melted.gltf.glb", 1.0), (K + "bottle_A_brown.gltf.glb", 1.0),
+              (K + "coin_stack_small.gltf.glb", 1.0), (K + "sword_shield_broken.gltf.glb", 1.0), (K + "plate_stack.gltf.glb", 1.0),
+              (K + "box_small.gltf.glb", 1.0), (Q + "Book_Stack_1.gltf", 1.4), (Q + "Bucket_Wooden_1.gltf", 1.4),
+              (Q + "Chain_Coil.gltf", 1.4), (Q + "Vase_2.gltf", 1.4), (Q + "Vase_Rubble_Medium.gltf", 1.4),
+              (Q + "CandleStick_Triple.gltf", 1.4), (Q + "Scroll_2.gltf", 1.4)]
+CORNER_PROPS = [(K + "barrel_large.gltf.glb", 1.0), (K + "barrel_small_stack.gltf.glb", 1.0), (K + "crates_stacked.gltf.glb", 1.0),
+                (K + "box_stacked.gltf.glb", 1.0), (K + "keg_decorated.gltf.glb", 1.0), (K + "trunk_medium_A.gltf.glb", 1.0),
+                (K + "rubble_half.gltf.glb", 1.0), (K + "shelf_small_candles.gltf.glb", 1.0)]
+
+def is_floor(g, x, z):
+    return 0 <= z < D and 0 <= x < W and g[z][x] in ".,:"
+
+def is_wall(g, x, z):
+    return not (0 <= z < D and 0 <= x < W) or g[z][x] == "#"
+
+dressing = []
+for lv, g in ((0, L0), (1, L1)):
+    for z in range(D):
+        for x in range(W):
+            if not is_floor(g, x, z) or (x, z, lv) in keep_clear:
+                continue
+            n, s_, e, w = is_wall(g, x, z - 1), is_wall(g, x, z + 1), is_wall(g, x + 1, z), is_wall(g, x - 1, z)
+            walls_here = [d for d, b in (("n", n), ("s", s_), ("e", e), ("w", w)) if b]
+            h = hval(x, z, lv)
+            vec = {"n": (0, -1), "s": (0, 1), "e": (1, 0), "w": (-1, 0)}
+            if len(walls_here) == 2 and walls_here not in (["n", "s"], ["e", "w"]):
+                ox, oz = vec[walls_here[0]][0] + vec[walls_here[1]][0], vec[walls_here[0]][1] + vec[walls_here[1]][1]
+                # A room corner (not a corridor bend): the cell diagonally inward is open floor too.
+                if is_floor(g, x - ox, z - oz) and h < 650:
+                    model, sc = CORNER_PROPS[hval(x, z, lv, 1) % len(CORNER_PROPS)]
+                    dressing.append(prop(model, x, z, lv, hval(x, z, lv, 2) % 360, sc, True, ox * 0.5, oz * 0.5))
+            elif len(walls_here) == 1:
+                d = walls_here[0]
+                ox, oz = vec[d]
+                side_a, side_b = (x + oz, z + ox), (x - oz, z - ox)
+                if is_floor(g, x - ox, z - oz) and is_floor(g, *side_a) and is_floor(g, *side_b) and h < 220:
+                    model, sc = WALL_PROPS[hval(x, z, lv, 3) % len(WALL_PROPS)]
+                    shift = (hval(x, z, lv, 4) % 100 - 50) / 100.0
+                    dressing.append(prop(model, x, z, lv, hval(x, z, lv, 5) % 360, sc, False,
+                                         ox * 0.62 + oz * shift, oz * 0.62 + ox * shift))
+zone["props"] += dressing
+print("dressing:", len(dressing), "props")
+
 out = sys.argv[1] if len(sys.argv) > 1 else "data/levels/zone.json"
 with open(out, "w") as f:
     json.dump(zone, f, indent=1)

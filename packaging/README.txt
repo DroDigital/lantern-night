@@ -36,10 +36,20 @@ Interact         A                        E
 Lock on          R3 (flick to switch)     Q or middle mouse (Z / C or wheel to switch)
 Pause            Start                    Esc
 
+MENUS AND SETTINGS
+------------------
+The title screen offers Continue, New game (starts over and erases the save),
+Settings and Quit. Settings are also in the pause menu: master, music and
+effects volume, camera shake, camera sensitivity, invert X / Y, fullscreen,
+resolution, vsync and lantern shadows (real shadows cast by the lantern;
+turn them off on slow GPUs).
+
 SAVES AND SETTINGS
 ------------------
 Windows: %APPDATA%\LanternKnight
 macOS:   ~/Library/Application Support/LanternKnight
 Linux:   $XDG_DATA_HOME/lantern-knight (or ~/.local/share/lantern-knight)
+save.json holds your progress (save.json.bak is the previous one) and
+settings.json your settings. Delete them to start fresh.
 
 See CREDITS.md for the artists and libraries that made this possible.

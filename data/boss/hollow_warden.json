@@ -6,7 +6,7 @@
   "brain": "boss",
   "boss_group": "hollow_warden",
   "boss_name": "The Hollow Warden",
-  "hp": 1500,
+  "hp": 1100,
   "posture": 280,
   "posture_decay": 16.0,
   "posture_decay_delay": 2.0,
